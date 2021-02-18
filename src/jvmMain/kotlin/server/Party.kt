@@ -1,3 +1,7 @@
+package server
+
+import common.*
+
 import io.ktor.http.cio.websocket.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

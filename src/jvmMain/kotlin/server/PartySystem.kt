@@ -1,3 +1,7 @@
+package server
+
+import common.*
+
 import kotlin.collections.*
 
 /**

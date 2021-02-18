@@ -5,8 +5,9 @@ val ktorVersion = "1.4.1"
 val logbackVersion = "1.2.3"
 
 plugins {
-    kotlin("multiplatform") version "1.4.30"
     application
+    kotlin("multiplatform") version "1.4.30"
+    kotlin("plugin.serialization") version "1.4.30"
 }
 
 group = "ch.rbarton"
@@ -52,6 +53,10 @@ kotlin {
                 implementation("io.ktor:ktor-websockets:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
                 implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
+                // CLI tool
+                implementation("io.ktor:ktor-client-websockets:$ktorVersion")
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
             }
         }
         val jsMain by getting {
@@ -65,7 +70,7 @@ kotlin {
 }
 
 application {
-    mainClassName = "ServerKt"
+    mainClassName = "server.ServerKt"
 }
 
 tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack") {

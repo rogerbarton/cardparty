@@ -1,3 +1,4 @@
+package common
 
 import kotlinx.serialization.*
 

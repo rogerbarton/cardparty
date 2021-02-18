@@ -1,3 +1,4 @@
+package common
 
 import io.ktor.http.cio.websocket.*
 import kotlinx.serialization.*

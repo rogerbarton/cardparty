@@ -1,3 +1,7 @@
+package server
+
+import common.*
+
 /**
  * Handles requests made by users in a FunEmployed game session
  */
