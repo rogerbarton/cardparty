@@ -69,7 +69,7 @@ application {
 }
 
 tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack") {
-    outputFileName = "output.js"
+    outputFileName = "client.js"
 }
 
 tasks.getByName<Jar>("jvmJar") {

@@ -1,40 +1,91 @@
-import io.ktor.application.call
-import io.ktor.html.respondHtml
-import io.ktor.http.HttpStatusCode
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.http.content.resources
-import io.ktor.http.content.static
-import kotlinx.html.*
+import io.ktor.application.*
+import io.ktor.features.*
+import io.ktor.http.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.http.content.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import io.ktor.websocket.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.Json
+import java.util.*
+import kotlin.collections.*
 
-fun HTML.index()
-{
-    head {
-        title("Hello from Ktor!")
-    }
-    body {
-        div {
-            +"Hello from Ktor"
-        }
-        div {
-            id = "root"
-        }
-        script(src = "/static/output.js") {}
-    }
-}
+val allConnections: MutableSet<Connection> = Collections.synchronizedSet<Connection?>(LinkedHashSet())
+val parties: MutableMap<String, Party> = Collections.synchronizedMap<String, Party>(LinkedHashMap())
 
-fun main()
+fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
+
+@Suppress("unused")
+fun Application.module()
 {
-    embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
+    embeddedServer(Netty, host = "127.0.0.1", port = 8080) {
+        install(WebSockets)
+        install(Compression) {
+            gzip()
+        }
+
         routing {
             get("/") {
-                call.respondHtml(HttpStatusCode.OK, HTML::index)
+                call.respondText(
+                    this::class.java.classLoader.getResource("index.html")!!.readText(),
+                    ContentType.Text.Html
+                )
             }
             static("/static") {
                 resources()
             }
+
+            webSocket("/") {
+                val thisConnection = Connection(this)
+                println("Adding user ${thisConnection.guid}.")
+                allConnections += thisConnection
+                try
+                {
+                    send(
+                        InitJson(
+                            thisConnection.guid,
+                            allConnections.size,
+                            parties.mapValues { it.value.connections.size })
+                    )
+                    for (frame in incoming)
+                    {
+                        frame as? Frame.Text ?: continue
+                        onFrameReceived(frame.readText(), thisConnection)
+                    }
+                }
+                catch (e: Exception)
+                {
+                    println("Connection fatal error: ${e.localizedMessage}")
+                }
+                finally
+                {
+                    println("Removing ${thisConnection.guid}:${thisConnection.name}")
+                    allConnections -= thisConnection
+                }
+            }
         }
     }.start(wait = true)
+}
+
+
+private suspend fun onFrameReceived(rawText: String, thisConnection: Connection)
+{
+    println("<-[${thisConnection.guid}:${thisConnection.name}] $rawText")
+
+    try
+    {
+        thisConnection.onJsonReceived(Json.decodeFromString(rawText))
+    }
+    catch (e: SerializationException)
+    {
+        println("<~[${thisConnection.guid}:${thisConnection.name}] SerializationException: ${e.localizedMessage}\n")
+        thisConnection.send(StatusJson(StatusCode.InvalidRequest))
+    }
+    catch (e: Exception)
+    {
+        thisConnection.send(StatusJson(StatusCode.ServerError))
+    }
 }

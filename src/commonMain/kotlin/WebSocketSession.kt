@@ -1,6 +1,4 @@
-package ch.rbarton.websockets.shared
 
-import ch.rbarton.websockets.shared.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*

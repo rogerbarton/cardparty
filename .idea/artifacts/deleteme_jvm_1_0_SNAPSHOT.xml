@@ -1,8 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="deleteme-jvm-1.0-SNAPSHOT">
-    <output-path>C:\Users\roger\Documents\IdeaProjects\deleteme\build\libs</output-path>
-    <root id="archive" name="deleteme-jvm-1.0-SNAPSHOT.jar">
-      <element id="module-output" name="deleteme.jvmMain" />
-    </root>
+    <output-path>C:\Users\roger\Documents\IdeaProjects\funemployed\build\libs</output-path>
+    <root id="archive" name="deleteme-jvm-1.0-SNAPSHOT.jar" />
   </artifact>
 </component>

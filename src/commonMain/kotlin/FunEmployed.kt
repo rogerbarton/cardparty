@@ -1,7 +1,5 @@
-package ch.rbarton.websockets.shared
 
 import kotlinx.serialization.Serializable
-import ch.rbarton.websockets.shared.*
 
 @Serializable
 data class Word(val value: String, val visible: Boolean, val votes: Int)

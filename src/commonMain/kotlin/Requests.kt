@@ -1,4 +1,3 @@
-package ch.rbarton.websockets.shared
 
 import kotlinx.serialization.*
 
