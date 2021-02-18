@@ -38,7 +38,7 @@ fun Application.module()
                     ContentType.Text.Html
                 )
             }
-            static("/static") {
+            static("/") {
                 resources()
             }
 

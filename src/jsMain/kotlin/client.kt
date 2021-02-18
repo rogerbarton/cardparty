@@ -1,18 +1,10 @@
-import react.dom.render
 import kotlinx.browser.document
-import kotlinx.browser.window
-
-import common.*
+import react.dom.*
 
 fun main()
 {
-    window.onload = {
-        render(document.getElementById("root")) {
-            child(Welcome::class) {
-                attrs {
-                    name = "Kotlin/JS"
-                }
-            }
-        }
+    document.bgColor = "yellow"
+    render(document.getElementById("root")) {
+        child(App::class) {}
     }
 }

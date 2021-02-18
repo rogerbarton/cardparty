@@ -61,9 +61,18 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
-                implementation("org.jetbrains:kotlin-react:16.13.1-pre.113-kotlin-1.4.0")
-                implementation("org.jetbrains:kotlin-react-dom:16.13.1-pre.113-kotlin-1.4.0")
-                implementation("org.jetbrains:kotlin-styled:1.0.0-pre.113-kotlin-1.4.0")
+                implementation("io.ktor:ktor-client-js:$ktorVersion") //includes http&websockets
+
+                implementation("org.jetbrains:kotlin-react:17.0.1-pre.144-kotlin-1.4.30")
+                implementation("org.jetbrains:kotlin-react-dom:17.0.1-pre.144-kotlin-1.4.30")
+                implementation(npm("react", "17.0.1"))
+                implementation(npm("react-dom", "17.0.1"))
+
+                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.144-kotlin-1.4.30")
+                implementation(npm("styled-components", "~5.2.1"))
+                implementation(npm("inline-style-prefixer", "~6.0.0"))
+
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2-native-mt")
             }
         }
     }
