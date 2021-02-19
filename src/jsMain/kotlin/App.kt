@@ -12,8 +12,7 @@ import react.dom.button
 
 enum class AppPhase
 {
-    SetName,
-    SetParty,
+    NoParty,
     Lobby,
 }
 
@@ -41,7 +40,7 @@ class App : RComponent<RProps, AppState>()
     @KtorExperimentalAPI
     override fun AppState.init()
     {
-        phase = AppPhase.SetName
+        phase = AppPhase.NoParty
 
         globalUserCount = 0
         globalPartyCount = 0
@@ -78,42 +77,46 @@ class App : RComponent<RProps, AppState>()
             attrs.partyCount = state.globalPartyCount
         }
 
-        child(components.InputField) {
-            attrs.title = "Choose a Name"
-            attrs.onSubmit = { value ->
-                setState {
-                    name = value
-                }
-                state.webSocketSession.launch {
-                    println("setname: ${state.name}")
-                    state.webSocketSession.send(SetNameJson(state.name))
-                }
-            }
-            attrs.clearOnSubmit = false
-        }
-
-        if (state.name.isNotEmpty())
+        if(state.name.isEmpty())
         {
-            child(components.SetParty) {
-                attrs.partyCode = state.partyCode
-                attrs.onCreateParty = {
+            child(components.InputField) {
+                attrs.title = "Choose a Name"
+                attrs.onSubmit = { value ->
+                    setState {
+                        name = value
+                    }
                     state.webSocketSession.launch {
-                        println("CreateParty")
-                        state.webSocketSession.send(ActionType.CreateParty)
+                        println("setname: ${state.name}")
+                        state.webSocketSession.send(SetNameJson(state.name))
                     }
                 }
-                attrs.onJoinParty = { value ->
-                    setState {
-                        partyCode = value
+                attrs.clearOnSubmit = false
+            }
+        }
+        else
+        {
+            if (state.partyCode == null)
+            {
+                child(components.SetParty) {
+                    attrs.partyCode = state.partyCode
+                    attrs.onCreateParty = {
+                        state.webSocketSession.launch {
+                            println("CreateParty")
+                            state.webSocketSession.send(ActionType.CreateParty)
+                        }
                     }
-                    state.webSocketSession.launch {
-                        println("JoinParty ${state.partyCode}")
-                        state.webSocketSession.send(JoinPartyJson(state.partyCode!!))
+                    attrs.onJoinParty = { value ->
+                        setState {
+                            partyCode = value
+                        }
+                        state.webSocketSession.launch {
+                            println("JoinParty ${state.partyCode}")
+                            state.webSocketSession.send(JoinPartyJson(state.partyCode!!))
+                        }
                     }
                 }
             }
-
-            if (state.partyCode != null)
+            else
             {
                 button(classes = "btn btn-secondary mb-2") {
                     +"Leave Party"
@@ -139,7 +142,5 @@ class App : RComponent<RProps, AppState>()
             }
         }
     }
-
-
 }
 
