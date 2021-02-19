@@ -67,6 +67,7 @@ kotlin {
                 implementation("org.jetbrains:kotlin-react-dom:17.0.1-pre.144-kotlin-1.4.30")
                 implementation(npm("react", "17.0.1"))
                 implementation(npm("react-dom", "17.0.1"))
+                implementation(npm("react-markdown", "5.0.3"))
 
                 implementation("org.jetbrains:kotlin-styled:5.2.0-pre.144-kotlin-1.4.30")
                 implementation(npm("styled-components", "~5.2.1"))
