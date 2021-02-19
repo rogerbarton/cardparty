@@ -37,9 +37,6 @@ kotlin {
             runTask {
                 cssSupport.enabled = true
             }
-            dceTask {
-                dceOptions.devMode = true
-            }
         }
     }
     sourceSets {
@@ -85,13 +82,13 @@ application {
     mainClassName = "server.ServerKt"
 }
 
-tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack") {
+tasks.getByName<KotlinWebpack>("jsBrowserDevelopmentWebpack") {
     outputFileName = "client.js"
 }
 
 tasks.getByName<Jar>("jvmJar") {
-    dependsOn(tasks.getByName("jsBrowserProductionWebpack"))
-    val jsBrowserProductionWebpack = tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack")
+    dependsOn(tasks.getByName("jsBrowserDevelopmentWebpack"))
+    val jsBrowserProductionWebpack = tasks.getByName<KotlinWebpack>("jsBrowserDevelopmentWebpack")
     from(File(jsBrowserProductionWebpack.destinationDirectory, jsBrowserProductionWebpack.outputFileName))
 }
 
