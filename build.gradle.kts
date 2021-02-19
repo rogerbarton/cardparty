@@ -37,6 +37,9 @@ kotlin {
             runTask {
                 cssSupport.enabled = true
             }
+            dceTask {
+                dceOptions.devMode = true
+            }
         }
     }
     sourceSets {

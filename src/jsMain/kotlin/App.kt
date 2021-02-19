@@ -1,24 +1,34 @@
 import common.*
+
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
-import kotlinx.html.InputType
-import kotlinx.html.js.onChangeFunction
-import kotlinx.html.js.onClickFunction
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
+import kotlinx.html.*
+import kotlinx.html.js.*
+import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
 import org.w3c.dom.HTMLInputElement
 import react.*
 import react.dom.*
+import styled.*
+
+enum class AppPhase
+{
+    SetName,
+    SetParty,
+    Lobby,
+}
 
 external interface AppState : RState
 {
+    var phase: AppPhase
+
     var guid: Int?
     var puid: Int?
+    var partyCode: String?
     var name: String
     var users: MutableMap<Int, String>?
 
@@ -33,8 +43,10 @@ class App : RComponent<RProps, AppState>()
     @KtorExperimentalAPI
     override fun AppState.init()
     {
+        phase = AppPhase.SetName
         guid = null
         puid = null
+        partyCode = null
         name = ""
         users = null
 
@@ -63,49 +75,45 @@ class App : RComponent<RProps, AppState>()
             +"Welcome to the word game!"
         }
 
-        h2 {
-            +"Enter your Name"
+        child(components.InputField) {
+            attrs.title = "Choose a Name"
+            attrs.onSubmit = { value ->
+                setState {
+                    name = value
+                }
+                state.webSocketSession.launch {
+                    println("setname: ${state.name}")
+                    state.webSocketSession.send(SetNameJson(state.name))
+                }
+            }
         }
-//            input {
-//                +"Name"
-//                attrs {
-//                    type = InputType.text
-//                    onChangeFunction = {
-//                        setState {
-//                            state.name = (it.target as HTMLInputElement).value
-//                        }
-//                    }
-//                }
-//            }
-        button {
-            +"Create Party"
-            attrs {
-                onClickFunction = {
+
+        if (state.name.isNotEmpty())
+        {
+            child(components.SetParty) {
+                attrs.partyCode = state.partyCode
+                attrs.onCreateParty = {
                     state.webSocketSession.launch {
                         println("CreateParty")
                         state.webSocketSession.send(ActionType.CreateParty)
                     }
                 }
-            }
-        }
-//            input {
-//                +"Party Code"
-//                attrs {
-//                    type = InputType.text
-//                    onChangeFunction = {
-//                        setState {
-//                            state.name = (it.target as HTMLInputElement).value
-//                        }
-//                    }
-//                }
-//            }
-        button {
-            +"Join Party"
-            attrs {
-                onClickFunction = {
+                attrs.onJoinParty = { value ->
+                    setState {
+                        partyCode = value
+                    }
                     state.webSocketSession.launch {
-                        println("JoinParty")
-                        state.webSocketSession.send(JoinPartyJson("6"))
+                        println("JoinParty ${state.partyCode}")
+                        state.webSocketSession.send(JoinPartyJson(state.partyCode!!))
+                    }
+                }
+            }
+
+            child(components.Chat) {
+                attrs.onSubmit = { message ->
+                    state.webSocketSession.launch {
+                        println("Chat: $message")
+                        state.webSocketSession.send(ChatJson(message))
                     }
                 }
             }
