@@ -17,27 +17,24 @@ external interface SetPartyProps : RProps
 val SetParty = functionalComponent<SetPartyProps> { props ->
     val (inputText, setInputText) = useState("")
 
-    button(classes = "btn btn-primary") {
+    button(classes = "btn btn-primary mb-2 mx-auto d-block shadow") {
         +"Create Party"
         attrs.onClickFunction = props.onCreateParty
     }
 
-    form(classes = "input-group mb-3") {
+    form(classes = "input-group mb-3 shadow") {
+        attrs.onSubmitFunction = {
+            it.preventDefault()
+            if (inputText.isNotEmpty())
+                props.onJoinParty(inputText)
+        }
         input(InputType.text, classes = "form-control") {
             attrs.onChangeFunction = {
                 setInputText((it.target as HTMLInputElement).value)
             }
-            attrs.onSubmitFunction = {
-                it.preventDefault()
-                props.onJoinParty(inputText)
-            }
         }
-        button(classes = "btn btn-outline-secondary") {
+        button(classes = "btn btn-secondary") {
             +"Join Party"
-            attrs.onClickFunction = {
-                it.preventDefault()
-                props.onJoinParty(inputText)
-            }
         }
     }
 }

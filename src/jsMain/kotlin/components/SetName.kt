@@ -20,7 +20,7 @@ external interface SetNameProps : RProps {
 val InputField = functionalComponent<SetNameProps> { props ->
     val (value, setValue) = useState("")
 
-    form {
+    form(classes = "mb-2") {
         attrs.onSubmitFunction = {
             it.preventDefault()
             props.onSubmit(value)
@@ -30,7 +30,7 @@ val InputField = functionalComponent<SetNameProps> { props ->
         h2 {
             +props.title
         }
-        input(InputType.text) {
+        input(InputType.text, classes = "form-control") {
             attrs.onChangeFunction = {
                 setValue((it.target as HTMLInputElement).value)
             }

@@ -42,6 +42,10 @@ class App : RComponent<RProps, AppState>()
     override fun AppState.init()
     {
         phase = AppPhase.SetName
+
+        globalUserCount = 0
+        globalPartyCount = 0
+
         guid = null
         puid = null
         partyCode = null
@@ -109,14 +113,17 @@ class App : RComponent<RProps, AppState>()
                 }
             }
 
-            if(state.partyCode != null)
+            if (state.partyCode != null)
             {
-                button(classes = "btn btn-secondary") {
+                button(classes = "btn btn-secondary mb-2") {
                     +"Leave Party"
                     attrs.onClickFunction = {
                         state.webSocketSession.launch {
                             println("LeaveParty")
                             state.webSocketSession.send(ActionType.LeaveParty)
+                        }
+                        setState {
+                            partyCode = null
                         }
                     }
                 }
