@@ -1,18 +1,11 @@
 package components
 
-import common.ActionType
-import common.JoinPartyJson
-import common.send
-import kotlinx.coroutines.launch
 import kotlinx.html.InputType
-import kotlinx.html.js.onChangeFunction
-import kotlinx.html.js.onClickFunction
-import kotlinx.html.js.onSubmitFunction
-import org.w3c.dom.HTMLInputElement
-import org.w3c.dom.events.Event
+import kotlinx.html.js.*
 import react.*
 import react.dom.*
-import styled.*
+import org.w3c.dom.events.Event
+import org.w3c.dom.HTMLInputElement
 
 external interface SetPartyProps : RProps
 {
@@ -24,21 +17,26 @@ external interface SetPartyProps : RProps
 val SetParty = functionalComponent<SetPartyProps> { props ->
     val (inputText, setInputText) = useState("")
 
-    styledButton {
+    button(classes = "btn btn-primary") {
         +"Create Party"
-        css.classes = mutableListOf("btn", "btn-primary")
         attrs.onClickFunction = props.onCreateParty
     }
 
-    form {
-        +"Join Party with Code"
-        attrs.onSubmitFunction = {
-            it.preventDefault()
-            props.onJoinParty(inputText)
-        }
-        input(InputType.text) {
+    form(classes = "input-group mb-3") {
+        input(InputType.text, classes = "form-control") {
             attrs.onChangeFunction = {
                 setInputText((it.target as HTMLInputElement).value)
+            }
+            attrs.onSubmitFunction = {
+                it.preventDefault()
+                props.onJoinParty(inputText)
+            }
+        }
+        button(classes = "btn btn-outline-secondary") {
+            +"Join Party"
+            attrs.onClickFunction = {
+                it.preventDefault()
+                props.onJoinParty(inputText)
             }
         }
     }

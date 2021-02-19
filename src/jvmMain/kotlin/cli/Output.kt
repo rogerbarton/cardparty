@@ -41,7 +41,7 @@ suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: String) {
                 println("Hi, there are ${json.userCount} people and ${json.parties.size} parties here.")
                 var i = 1
                 json.parties.forEach{
-                    println("\t${i.toString().padStart(2)}. ${it.key} (${it.value})")
+                    println("\t${i++.toString().padStart(2)}. ${it.key} (${it.value})")
                 }
             }
             is StatusJson -> println("${json.status.name}${if(json.message != null) ": ${json.message}" else ""}")
@@ -53,8 +53,9 @@ suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: String) {
             }
             is CreatePartyResponseJson ->
             {
-                println("Created party with code: ${json.partyCode}")
                 users = mutableMapOf(0 to name)
+                partyCode = json.partyCode
+                println("Created party with code: ${json.partyCode}")
             }
             is JoinPartyResponseJson ->
             {

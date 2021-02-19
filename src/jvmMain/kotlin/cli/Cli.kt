@@ -16,6 +16,8 @@ var serverPort = 8080
 
 var guid: Int? = null
 var puid: Int? = null
+var partyCode: String? = null
+
 var name: String = ""
 var users: MutableMap<Int, String>? = null
 
