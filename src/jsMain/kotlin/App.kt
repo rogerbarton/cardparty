@@ -51,8 +51,9 @@ class App : RComponent<RProps, AppState>()
                 port = serverPort,
                 path = "/"
             ) {
-                launch { receiveWebsocketFrames() }
+                println("WebSocket running...")
             }
+            receiveWebsocketFrames()
         }
     }
 
@@ -62,10 +63,9 @@ class App : RComponent<RProps, AppState>()
             +"Welcome to the word game!"
         }
 
-        form {
-            h2 {
-                +"Enter your Name"
-            }
+        h2 {
+            +"Enter your Name"
+        }
 //            input {
 //                +"Name"
 //                attrs {
@@ -77,16 +77,17 @@ class App : RComponent<RProps, AppState>()
 //                    }
 //                }
 //            }
-            button {
-                +"Create Party"
-                attrs {
-                    onClickFunction = {
-                        suspend {
-                            state.webSocketSession.send(ActionType.CreateParty)
-                        }
+        button {
+            +"Create Party"
+            attrs {
+                onClickFunction = {
+                    state.webSocketSession.launch {
+                        println("CreateParty")
+                        state.webSocketSession.send(ActionType.CreateParty)
                     }
                 }
             }
+        }
 //            input {
 //                +"Party Code"
 //                attrs {
@@ -98,11 +99,13 @@ class App : RComponent<RProps, AppState>()
 //                    }
 //                }
 //            }
-            button {
-                +"Join Party"
-                attrs {
-                    onClickFunction = {
-                        TODO()
+        button {
+            +"Join Party"
+            attrs {
+                onClickFunction = {
+                    state.webSocketSession.launch {
+                        println("JoinParty")
+                        state.webSocketSession.send(JoinPartyJson("6"))
                     }
                 }
             }
@@ -113,6 +116,7 @@ class App : RComponent<RProps, AppState>()
     {
         try
         {
+            println("Receiving frames from incoming")
             for (frame in state.webSocketSession.incoming)
             {
                 frame as? Frame.Text ?: continue
