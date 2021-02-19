@@ -2,6 +2,7 @@ package cli
 
 import common.*
 import io.ktor.client.features.websocket.*
+import io.ktor.http.cio.websocket.*
 
 suspend fun DefaultClientWebSocketSession.inputMessages()
 {
@@ -21,7 +22,14 @@ suspend fun DefaultClientWebSocketSession.inputMessages()
                     if (args.size > 1)
                     {
                         name = args[1]
-                        send(SetNameJson(name))
+                        send(SetNameJson(name)) { response ->
+                            if (response !is StatusJson)
+                                println("SetName: $response")
+                            else if (response.status != StatusCode.Success)
+                                println("SetName: ${response.status}")
+                            else
+                                println("Successfully set name")
+                        }
                     }
                     else
                         println("Use: setname [new name]")
@@ -30,7 +38,15 @@ suspend fun DefaultClientWebSocketSession.inputMessages()
                 "join" ->
                 {
                     if (args.size > 1)
-                        send(JoinPartyJson(args[1]))
+                        send(JoinPartyJson(args[1])) { response ->
+                            if (response is JoinPartyResponseJson)
+                            {
+                                users = response.userToNames.toMutableMap()
+                                println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
+                            }
+                            else if (response is StatusJson)
+                                println("Join Party: ${response.status}")
+                        }
                     else
                         println("Use: join [party code]")
                 }
@@ -69,4 +85,18 @@ suspend fun DefaultClientWebSocketSession.inputMessages()
             return
         }
     }
+}
+
+val responseHandlerQueue: MutableMap<Int, (BaseJson) -> Unit> = mutableMapOf()
+
+suspend fun WebSocketSession.send(payload: BaseJson, onResponse: (BaseJson) -> Unit)
+{
+    payload.requestId = genRequestId()
+    responseHandlerQueue[payload.requestId!!] = onResponse
+    send(payload)
+}
+
+suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseJson) -> Unit)
+{
+    send(ActionJson(actionType), onResponse)
 }

@@ -86,10 +86,10 @@ private suspend fun onFrameReceived(rawText: String, thisConnection: Connection)
     catch (e: SerializationException)
     {
         println("<~[${thisConnection.guid}:${thisConnection.name}] SerializationException: ${e.localizedMessage}\n")
-        thisConnection.send(StatusJson(StatusCode.InvalidRequest))
+        thisConnection.send(StatusCode.InvalidRequest)
     }
     catch (e: Exception)
     {
-        thisConnection.send(StatusJson(StatusCode.ServerError))
+        thisConnection.send(StatusCode.ServerError)
     }
 }

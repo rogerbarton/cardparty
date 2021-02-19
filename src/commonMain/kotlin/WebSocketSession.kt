@@ -19,4 +19,4 @@ suspend fun WebSocketSession.send(payload: BaseJson) =
  * Use this for RPCs without data, signal only.
  */
 suspend fun WebSocketSession.send(actionType: ActionType) =
-    send(Json.encodeToString(ActionJson(actionType) as BaseJson))
+    send(ActionJson(actionType))

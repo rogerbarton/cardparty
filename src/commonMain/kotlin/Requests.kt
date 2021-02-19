@@ -7,7 +7,9 @@ import kotlinx.serialization.*
  */
 
 @Serializable
-sealed class BaseJson(@Required val version: Int? = ApiVersion)
+sealed class BaseJson(var requestId: Int? = null, @Required val version: Int? = ApiVersion)
+
+expect fun genRequestId(): Int
 
 /**
  * All actions that we can send which do not have any data associated with them, i.e. an RPC.
