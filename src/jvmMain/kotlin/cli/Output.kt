@@ -34,6 +34,7 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
 
     try
     {
+        // Handle incoming messages differently depending on if they have a matching requestId
         val json = Json.decodeFromString<BaseJson>(rawText)
         if (json.requestId == null)
         {

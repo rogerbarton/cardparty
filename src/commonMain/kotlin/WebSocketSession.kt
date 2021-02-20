@@ -20,3 +20,6 @@ suspend fun WebSocketSession.send(payload: BaseJson) =
  */
 suspend fun WebSocketSession.send(actionType: ActionType) =
     send(ActionJson(actionType))
+
+suspend fun WebSocketSession.send(status: StatusCode) =
+    send(StatusJson(status))

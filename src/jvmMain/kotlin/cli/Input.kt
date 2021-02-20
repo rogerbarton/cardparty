@@ -19,58 +19,77 @@ suspend fun DefaultClientWebSocketSession.inputMessages()
             {
                 "setname" ->
                 {
-                    if (args.size > 1)
+                    if (args.size <= 1)
                     {
-                        name = args[1]
-                        send(SetNameJson(name)) { response ->
-                            if (response !is StatusJson)
-                                println("SetName: $response")
-                            else if (response.status != StatusCode.Success)
-                                println("SetName: ${response.status}")
-                            else
-                                println("Successfully set name")
+                        println("Use: setname [new name]")
+                        continue
+                    }
+
+                    name = args[1]
+                    send(SetNameJson(name)) { response ->
+                        when
+                        {
+                            response !is StatusJson -> println("SetName: $response")
+                            response.status != StatusCode.Success -> println("SetName: ${response.status}")
+                            else -> println("Successfully set name")
                         }
                     }
-                    else
-                        println("Use: setname [new name]")
                 }
                 "create" -> send(ActionType.CreateParty)
                 "join" ->
                 {
-                    if (args.size > 1)
-                        send(JoinPartyJson(args[1])) { response ->
-                            if (response is JoinPartyResponseJson)
-                            {
-                                users = response.userToNames.toMutableMap()
-                                println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
-                            }
-                            else if (response is StatusJson)
-                                println("Join Party: ${response.status}")
-                        }
-                    else
+                    if (args.size <= 1)
+                    {
                         println("Use: join [party code]")
+                        continue
+                    }
+
+                    send(JoinPartyJson(args[1])) { response ->
+                        if (response is JoinPartyResponseJson)
+                        {
+                            partyCode = args[1]
+                            users = response.userToNames.toMutableMap()
+                            println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
+                        }
+                        else if (response is StatusJson)
+                            println("Join Party: ${response.status}")
+                        else
+                            println("Error in JoinParty: $response")
+                    }
                 }
                 "chat" ->
                 {
-                    if (args.size > 1)
-                        send(ChatJson(args[1]))
-                    else
+                    if (args.size <= 1)
+                    {
                         println("Use: chat [message]")
+                        continue
+                    }
+
+                    send(ChatJson(args[1]))
                 }
                 "leave" ->
                 {
-                    send(ActionType.LeaveParty)
-                    users = null  // TODO: Only clear once response is successful
-                    puid = null
+                    send(ActionType.LeaveParty) { response ->
+                        if (response is StatusJson && response.status == StatusCode.Success) {
+                            users = null
+                            puid = null
+                            partyCode = null
+                            println("Left party")
+                        }
+                        else
+                            println("Error in LeaveParty: $response")
+                    }
                 }
                 "get" ->
                 {
                     when (if (args.size > 1) args[1] else "")
                     {
                         "users", "names" -> println("users: ${users?.values?.joinToString(", ")}")
+                        "party", "code" -> println("partyCode: $partyCode")
                         else -> println(
-                            "Use get [attribute]\n" +
-                                    "  1. users | names"
+                            "Use: get [attribute]\n" +
+                                    "  1. users | names\n" +
+                                    "  2. party | code"
                         )
                     }
 
