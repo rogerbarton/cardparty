@@ -106,12 +106,20 @@ class App : RComponent<RProps, AppState>()
                         }
                     }
                     attrs.onJoinParty = { value ->
-                        setState {
-                            partyCode = value
-                        }
                         state.webSocketSession.launch {
-                            println("JoinParty ${state.partyCode}")
-                            state.webSocketSession.send(JoinPartyJson(state.partyCode!!))
+                            println("JoinParty $value")
+                            state.webSocketSession.send(JoinPartyJson(value)) { response ->
+                                when(response) {
+                                    is JoinPartyResponseJson -> {
+                                        setState {
+                                            users = response.userToNames.toMutableMap()
+                                            partyCode = value
+                                        }
+                                        println("Joined party with ${state.users!!.size} users: ${state.users!!.values.joinToString(", ")}")
+                                    }
+                                    else -> handleUnidentifiedResponse(response)
+                                }
+                            }
                         }
                     }
                 }
@@ -123,10 +131,16 @@ class App : RComponent<RProps, AppState>()
                     attrs.onClickFunction = {
                         state.webSocketSession.launch {
                             println("LeaveParty")
-                            state.webSocketSession.send(ActionType.LeaveParty)
-                        }
-                        setState {
-                            partyCode = null
+                            state.webSocketSession.send(ActionType.LeaveParty) { response ->
+                                if(response is StatusJson && response.status == StatusCode.Success)
+                                {
+                                    setState {
+                                        partyCode = null
+                                    }
+                                }
+                                else
+                                    handleUnidentifiedResponse(response)
+                            }
                         }
                     }
                 }

@@ -23,3 +23,17 @@ suspend fun WebSocketSession.send(actionType: ActionType) =
 
 suspend fun WebSocketSession.send(status: StatusCode) =
     send(StatusJson(status))
+
+val responseHandlerQueue: MutableMap<Int, (BaseJson) -> Unit> = mutableMapOf()
+
+suspend fun WebSocketSession.send(payload: BaseJson, onResponse: (BaseJson) -> Unit)
+{
+    payload.requestId = genRequestId()
+    responseHandlerQueue[payload.requestId!!] = onResponse
+    send(payload)
+}
+
+suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseJson) -> Unit)
+{
+    send(ActionJson(actionType), onResponse)
+}
