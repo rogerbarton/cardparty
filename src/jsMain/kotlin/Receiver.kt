@@ -72,9 +72,11 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
         is ActionJson -> println(json.action.name)
         is SetNameBroadcastJson ->
         {
-            println("[${json.userId}:${state.users!![json.userId]}] Changed name to ${json.name}")
+            val log = "[${json.userId}:${state.users!![json.userId]}] Changed name to ${json.name}"
+            println(log)
             setState {
                 users!![json.userId] = json.name
+                chatHistory.add(log)
             }
         }
         is CreatePartyResponseJson ->
@@ -88,28 +90,38 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
         }
         is JoinPartyResponseJson ->
         {
+            val log = "Joined party with ${state.users!!.size} users: ${state.users!!.values.joinToString(", ")}"
             setState {
                 users = json.userToNames.toMutableMap()
+                chatHistory.add(log)
             }
-            println("Joined party with ${state.users!!.size} users: ${state.users!!.values.joinToString(", ")}")
+            println(log)
         }
         is JoinPartyBroadcastJson ->
         {
+            val log = "[${json.userId}:${json.name}] Joined party"
             setState {
                 users!![json.userId] = json.name
+                chatHistory.add(log)
             }
-            println("[${json.userId}:${json.name}] Joined party")
+            println(log)
         }
         is LeavePartyBroadcastJson ->
         {
-            println("[${json.userId}:${state.users!![json.userId]}] Left party")
+            val log = "[${json.userId}:${state.users!![json.userId]}] Left party"
+            println(log)
             setState {
                 users!!.remove(json.userId)
+                chatHistory.add(log)
             }
         }
         is ChatBroadcastJson ->
         {
-            println("[${json.userId}:${state.users?.get(json.userId)}]: ${json.message}")
+            val message = "[${json.userId}:${state.users?.get(json.userId)}]: ${json.message}"
+            setState{
+                chatHistory.add(message)
+            }
+            println(message)
         }
         else -> println("-> $json")
     }
