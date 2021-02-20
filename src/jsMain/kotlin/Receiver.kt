@@ -84,7 +84,7 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
             setState {
                 partyCode = json.partyCode
                 puid = 0
-                users = mutableMapOf(0 to state.name)
+                users = mutableMapOf(state.guid!! to state.name)
             }
             println("Created party with code: ${json.partyCode}")
         }

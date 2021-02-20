@@ -1,7 +1,10 @@
 package components
 
+import common.StatusCode
+import common.StatusJson
 import kotlinx.html.InputType
 import kotlinx.html.js.*
+import kotlinx.html.role
 import react.*
 import react.dom.*
 import org.w3c.dom.events.Event
@@ -12,12 +15,13 @@ external interface SetPartyProps : RProps
     var partyCode: String?
     var onCreateParty: (Event) -> Unit
     var onJoinParty: (String) -> Unit
+    var lastStatus: StatusJson?
 }
 
 val SetParty = functionalComponent<SetPartyProps> { props ->
     val (inputText, setInputText) = useState("")
 
-    button(classes = "btn btn-primary mb-2 mx-auto d-block shadow") {
+    button(classes = "btn btn-secondary mb-2 mx-auto d-block shadow") {
         +"Create Party"
         attrs.onClickFunction = props.onCreateParty
     }
@@ -32,9 +36,29 @@ val SetParty = functionalComponent<SetPartyProps> { props ->
             attrs.onChangeFunction = {
                 setInputText((it.target as HTMLInputElement).value)
             }
+            attrs.autoFocus = true
         }
-        button(classes = "btn btn-secondary") {
+        button(classes = "btn btn-primary") {
             +"Join Party"
+        }
+        if (props.lastStatus != null && props.lastStatus!!.status != StatusCode.Success)
+        {
+            div(classes = "toast show") {
+                attrs.role = "alert"
+                attrs["aria-live"] = "assertive"
+                attrs["aria-atomic"] = "true"
+                div(classes = "toast-header") {
+                    strong(classes = "me-auto") { +props.lastStatus!!.status.name }
+                    button(classes = "btn-close") {
+                        attrs["data-bs-dismiss"] = "toast"
+                        attrs["aria-label"] = "Close"
+                    }
+                }
+                if (props.lastStatus!!.message != null)
+                    div(classes = "toast-body") {
+                        +props.lastStatus!!.message!!
+                    }
+            }
         }
     }
 }

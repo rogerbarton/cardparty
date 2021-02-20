@@ -23,6 +23,7 @@ external interface AppState : RState
     var users: MutableMap<Int, String>?
 
     var chatHistory: MutableList<String>
+    var lastPartyStatus: StatusJson?
 
     var serverAddress: String
     var serverPort: Int
@@ -95,8 +96,10 @@ class App : RComponent<RProps, AppState>()
 
     private fun RBuilder.setName()
     {
-        child(components.InputField) {
-            attrs.title = "Choose a Name"
+        h2 {
+            +"Choose a Name"
+        }
+        child(components.NameField) {
             attrs.onSubmit = { value ->
                 setState {
                     name = value
@@ -106,7 +109,6 @@ class App : RComponent<RProps, AppState>()
                     state.webSocketSession.send(SetNameJson(state.name))
                 }
             }
-            attrs.clearOnSubmit = false
         }
     }
 
@@ -114,6 +116,7 @@ class App : RComponent<RProps, AppState>()
     {
         child(components.SetParty) {
             attrs.partyCode = state.partyCode
+            attrs.lastStatus = state.lastPartyStatus
             attrs.onCreateParty = {
                 state.webSocketSession.launch {
                     println("CreateParty")
@@ -140,6 +143,12 @@ class App : RComponent<RProps, AppState>()
                                     }"
                                 )
                             }
+                            is StatusJson ->
+                            {
+                                setState {
+                                    lastPartyStatus = response
+                                }
+                            }
                             else -> handleUnidentifiedResponse(response)
                         }
                     }
@@ -153,17 +162,37 @@ class App : RComponent<RProps, AppState>()
         h1 {
             +"Word Game Lobby"
         }
-        +"Join with code: "
-        b { +state.partyCode.toString() }
+        h2 {
+            +"Join with code: "
+            span(classes = "badge bg-primary") { +state.partyCode.toString() }
+        }
 
-        ul {
-            for (user in state.users!!)
-            {
-                li {
-                    +"${user.key}. ${user.value}"
+        child(components.usersList) {
+            attrs.thisUser = state.guid!!
+            attrs.users = state.users!!
+            attrs.onSetName = { newName ->
+                state.webSocketSession.launch {
+                    state.webSocketSession.send(SetNameJson(newName)) { response ->
+                        if (response is StatusJson && response.status == StatusCode.Success)
+                        {
+                            setState {
+                                name = newName
+                                users!![guid!!] = newName
+                            }
+                        }
+                        else
+                            handleUnidentifiedResponse(response)
+                    }
                 }
             }
         }
+
+//        child(components.gameSettings) {
+//            attrs.editable = isHost
+//            attrs.onSubmit = {
+//
+//            }
+//        }
 
         button(classes = "btn btn-secondary mb-2") {
             +"Leave Party"
