@@ -38,6 +38,7 @@ suspend fun Connection.onJsonReceived(json: BaseJson)
         is JoinPartyJson -> onRequestReceived(json)
         is ChatJson -> onRequestReceived(json)
 
+        is SetGameSettingsJson -> onRequestReceived(json)
         is AddWordJson -> onRequestReceived(json)
         else -> send(StatusCode.InvalidRequestType)
     }

@@ -1,8 +1,10 @@
 package common
 
 import io.ktor.http.cio.websocket.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Helper extension methods
@@ -33,7 +35,5 @@ suspend fun WebSocketSession.send(payload: BaseJson, onResponse: (BaseJson) -> U
     send(payload)
 }
 
-suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseJson) -> Unit)
-{
+suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseJson) -> Unit) =
     send(ActionJson(actionType), onResponse)
-}

@@ -37,7 +37,7 @@ suspend fun Connection.onRequestReceived(data: JoinPartyJson)
     partyCode = data.partyCode
 
     party.broadcast(this, JoinPartyBroadcastJson(guid, name))
-    send(JoinPartyResponseJson(party.connections.associateBy({ it.guid }, { it.name })))
+    send(JoinPartyResponseJson(party.connections.associateBy({ it.guid }, { it.name }), party.host.guid, party.state))
 }
 
 /**
@@ -45,12 +45,13 @@ suspend fun Connection.onRequestReceived(data: JoinPartyJson)
  */
 suspend fun Connection.onRequestReceived(data: ChatJson)
 {
-    val peerConnections = if (partyCode == null)
-        allConnections.filter { it.partyCode == null }
-    else
-        party!!.connections
+    if (partyCode == null)
+    {
+        send(StatusCode.NotInAParty)
+        return
+    }
 
-    peerConnections.broadcast(this, ChatBroadcastJson(guid, data.message))
+    party!!.connections.broadcast(this, ChatBroadcastJson(guid, data.message))
     send(StatusCode.Success)
 }
 

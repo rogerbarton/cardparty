@@ -10,7 +10,7 @@ suspend fun App.receiveWebsocketFrames()
 {
     try
     {
-        for (frame in state.webSocketSession.incoming)
+        for (frame in state.ws.incoming)
         {
             frame as? Frame.Text ?: continue
             onFrameReceived(frame.readText())
@@ -41,8 +41,13 @@ private fun App.onFrameReceived(rawText: String)
             if (responseHandlerQueue.contains(json.requestId))
                 responseHandlerQueue[json.requestId!!]!!.invoke(json)
             else
-                println("<~[server] InvalidRequestId: BaseJson.requestId = ${json.requestId} " +
-                        "has no corresponding responseHandler in responseHandlerQueue.\n")
+            {
+                println(
+                    "<~[server] InvalidRequestId: BaseJson.requestId = ${json.requestId} " +
+                            "has no corresponding responseHandler in responseHandlerQueue.\n"
+                )
+                handleUnidentifiedResponse(json)
+            }
         }
     }
     catch (e: SerializationException)
@@ -72,56 +77,49 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
         is ActionJson -> println(json.action.name)
         is SetNameBroadcastJson ->
         {
-            val log = "[${json.userId}:${state.users!![json.userId]}] Changed name to ${json.name}"
+            if (state.party == null) return
+            val log = "[${json.userId}:${state.party!!.users[json.userId]}] Changed name to ${json.name}"
             println(log)
             setState {
-                users!![json.userId] = json.name
+                party!!.users[json.userId] = json.name
                 chatHistory.add(log)
             }
-        }
-        is CreatePartyResponseJson ->
-        {
-            setState {
-                partyCode = json.partyCode
-                puid = 0
-                users = mutableMapOf(state.guid!! to state.name)
-            }
-            println("Created party with code: ${json.partyCode}")
-        }
-        is JoinPartyResponseJson ->
-        {
-            val log = "Joined party with ${state.users!!.size} users: ${state.users!!.values.joinToString(", ")}"
-            setState {
-                users = json.userToNames.toMutableMap()
-                chatHistory.add(log)
-            }
-            println(log)
         }
         is JoinPartyBroadcastJson ->
         {
+            if (state.party == null) return
             val log = "[${json.userId}:${json.name}] Joined party"
             setState {
-                users!![json.userId] = json.name
+                party!!.users[json.userId] = json.name
                 chatHistory.add(log)
             }
             println(log)
         }
         is LeavePartyBroadcastJson ->
         {
-            val log = "[${json.userId}:${state.users!![json.userId]}] Left party"
+            if (state.party == null) return
+            val log = "[${json.userId}:${state.party!!.users[json.userId]}] Left party"
             println(log)
             setState {
-                users!!.remove(json.userId)
+                party!!.users.remove(json.userId)
                 chatHistory.add(log)
             }
         }
         is ChatBroadcastJson ->
         {
-            val message = "[${json.userId}:${state.users?.get(json.userId)}]: ${json.message}"
-            setState{
+            if (state.party == null) return
+            val message = "[${json.userId}:${state.party!!.users[json.userId]}]: ${json.message}"
+            setState {
                 chatHistory.add(message)
             }
             println(message)
+        }
+        is SetGameSettingsJson ->
+        {
+            if (state.party == null) return
+            setState {
+                party!!.state.settings = json.settings
+            }
         }
         else -> println("-> $json")
     }

@@ -12,7 +12,6 @@ import kotlinx.serialization.json.Json
 class Party(val code: String, var host: Connection)
 {
     val connections = mutableSetOf(host)
-    var settings: Settings = Settings()
     var state: GameState = GameState()
 
     suspend fun broadcast(origin: Connection, message: BaseJson) = connections.broadcast(origin, message)
@@ -28,10 +27,11 @@ class Party(val code: String, var host: Connection)
 
         connections -= connection
 
-        if (host == connection)
+        val hostChanged = host == connection
+        if (hostChanged)
             host = connections.random()
 
-        broadcast(connection, LeavePartyBroadcastJson(connection.guid))
+        broadcast(connection, LeavePartyBroadcastJson(connection.guid, if (hostChanged) host.guid else null))
     }
 }
 

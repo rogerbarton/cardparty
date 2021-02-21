@@ -16,6 +16,7 @@ external interface SetPartyProps : RProps
     var onCreateParty: (Event) -> Unit
     var onJoinParty: (String) -> Unit
     var lastStatus: StatusJson?
+    var onDismissLastStatus: (Event) -> Unit
 }
 
 val SetParty = functionalComponent<SetPartyProps> { props ->
@@ -41,23 +42,16 @@ val SetParty = functionalComponent<SetPartyProps> { props ->
         button(classes = "btn btn-primary") {
             +"Join Party"
         }
-        if (props.lastStatus != null && props.lastStatus!!.status != StatusCode.Success)
-        {
-            div(classes = "toast show") {
-                attrs.role = "alert"
-                attrs["aria-live"] = "assertive"
-                attrs["aria-atomic"] = "true"
-                div(classes = "toast-header") {
-                    strong(classes = "me-auto") { +props.lastStatus!!.status.name }
-                    button(classes = "btn-close") {
-                        attrs["data-bs-dismiss"] = "toast"
-                        attrs["aria-label"] = "Close"
-                    }
-                }
-                if (props.lastStatus!!.message != null)
-                    div(classes = "toast-body") {
-                        +props.lastStatus!!.message!!
-                    }
+    }
+    if (props.lastStatus != null && props.lastStatus!!.status != StatusCode.Success)
+    {
+        div(classes = "alert alert-warning fade show") {
+            attrs.role = "alert"
+            strong(classes = "me-auto") { +props.lastStatus!!.status.name }
+            if (props.lastStatus!!.message != null)
+                +props.lastStatus!!.message!!
+            button(classes = "btn-close") {
+                attrs.onClickFunction = props.onDismissLastStatus
             }
         }
     }

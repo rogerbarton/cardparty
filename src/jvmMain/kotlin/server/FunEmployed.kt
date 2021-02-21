@@ -6,6 +6,19 @@ import common.*
  * Handles requests made by users in a FunEmployed game session
  */
 
+suspend fun Connection.onRequestReceived(json: SetGameSettingsJson)
+{
+    if(party == null)
+    {
+        send(StatusCode.InvalidPartyCode)
+        return
+    }
+
+    party!!.state.settings = json.settings
+    party!!.broadcast(this, SetGameSettingsJson(party!!.state.settings))
+    send(StatusCode.Success)
+}
+
 suspend fun Connection.onRequestReceived(json: AddWordJson)
 {
     if(party == null)

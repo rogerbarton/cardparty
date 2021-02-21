@@ -11,6 +11,13 @@ import kotlinx.html.js.onClickFunction
 import react.*
 import react.dom.*
 
+data class Party(
+    val code: String,
+    var users: MutableMap<Int, String>,
+    var host: Int,
+    var state: GameState
+)
+
 external interface AppState : RState
 {
     var globalUserCount: Int
@@ -18,9 +25,8 @@ external interface AppState : RState
 
     var guid: Int?
     var puid: Int?
-    var partyCode: String?
     var name: String
-    var users: MutableMap<Int, String>?
+    var party: Party?
 
     var chatHistory: MutableList<String>
     var lastPartyStatus: StatusJson?
@@ -28,7 +34,7 @@ external interface AppState : RState
     var serverAddress: String
     var serverPort: Int
     var httpClient: HttpClient
-    var webSocketSession: WebSocketSession
+    var ws: WebSocketSession
 }
 
 class App : RComponent<RProps, AppState>()
@@ -36,16 +42,8 @@ class App : RComponent<RProps, AppState>()
     @KtorExperimentalAPI
     override fun AppState.init()
     {
-        globalUserCount = 0
-        globalPartyCount = 0
-
-        guid = null
-        puid = null
-        partyCode = null
-        name = ""
-        users = null
-
         chatHistory = mutableListOf()
+        name = ""
 
         serverAddress = "127.0.0.1"
         serverPort = 8080
@@ -54,7 +52,7 @@ class App : RComponent<RProps, AppState>()
         }
 
         GlobalScope.launch {
-            webSocketSession = httpClient.webSocketSession(
+            ws = httpClient.webSocketSession(
                 method = HttpMethod.Get,
                 host = serverAddress,
                 port = serverPort,
@@ -75,15 +73,17 @@ class App : RComponent<RProps, AppState>()
             return
         }
 
-        if (state.partyCode == null)
+        if (state.party == null)
         {
             welcome()
             setParty()
         }
         else
+        {
             inParty()
+            chat()
+        }
 
-        chat()
     }
 
     private fun RBuilder.welcome()
@@ -104,9 +104,9 @@ class App : RComponent<RProps, AppState>()
                 setState {
                     name = value
                 }
-                state.webSocketSession.launch {
+                state.ws.launch {
                     println("setname: ${state.name}")
-                    state.webSocketSession.send(SetNameJson(state.name))
+                    state.ws.send(SetNameJson(state.name))
                 }
             }
         }
@@ -115,33 +115,57 @@ class App : RComponent<RProps, AppState>()
     private fun RBuilder.setParty()
     {
         child(components.SetParty) {
-            attrs.partyCode = state.partyCode
+            attrs.partyCode = state.party?.code
             attrs.lastStatus = state.lastPartyStatus
+            attrs.onDismissLastStatus = { setState { lastPartyStatus = null } }
             attrs.onCreateParty = {
-                state.webSocketSession.launch {
-                    println("CreateParty")
-                    state.webSocketSession.send(ActionType.CreateParty)
+                println("CreateParty")
+                setState { lastPartyStatus = null }
+                state.ws.launch {
+                    state.ws.send(ActionType.CreateParty) { response ->
+                        when (response)
+                        {
+                            is CreatePartyResponseJson ->
+                            {
+                                setState {
+                                    party = Party(
+                                        response.partyCode,
+                                        mutableMapOf(state.guid!! to state.name),
+                                        state.guid!!,
+                                        GameState()
+                                    )
+                                }
+                                println("Created party with code: ${response.partyCode}")
+                            }
+                            is StatusJson ->
+                            {
+                                setState {
+                                    lastPartyStatus = response
+                                }
+                            }
+                            else -> handleUnidentifiedResponse(response)
+                        }
+                    }
                 }
             }
             attrs.onJoinParty = { value ->
-                state.webSocketSession.launch {
-                    println("JoinParty $value")
-                    state.webSocketSession.send(JoinPartyJson(value)) { response ->
+                println("JoinParty $value")
+                setState { lastPartyStatus = null }
+                state.ws.launch {
+                    state.ws.send(JoinPartyJson(value)) { response ->
                         when (response)
                         {
                             is JoinPartyResponseJson ->
                             {
                                 setState {
-                                    users = response.userToNames.toMutableMap()
-                                    partyCode = value
+                                    party = Party(
+                                        value,
+                                        response.userToNames.toMutableMap(),
+                                        response.host,
+                                        response.state
+                                    )
                                 }
-                                println(
-                                    "Joined party with ${state.users!!.size} users: ${
-                                        state.users!!.values.joinToString(
-                                            ", "
-                                        )
-                                    }"
-                                )
+                                println("Joined party with ${state.party!!.users.size} users")
                             }
                             is StatusJson ->
                             {
@@ -164,20 +188,20 @@ class App : RComponent<RProps, AppState>()
         }
         h2 {
             +"Join with code: "
-            span(classes = "badge bg-primary") { +state.partyCode.toString() }
+            span(classes = "badge bg-primary") { +state.party!!.code }
         }
 
         child(components.usersList) {
             attrs.thisUser = state.guid!!
-            attrs.users = state.users!!
+            attrs.users = state.party!!.users
             attrs.onSetName = { newName ->
-                state.webSocketSession.launch {
-                    state.webSocketSession.send(SetNameJson(newName)) { response ->
+                state.ws.launch {
+                    state.ws.send(SetNameJson(newName)) { response ->
                         if (response is StatusJson && response.status == StatusCode.Success)
                         {
                             setState {
                                 name = newName
-                                users!![guid!!] = newName
+                                party!!.users[guid!!] = newName
                             }
                         }
                         else
@@ -187,23 +211,28 @@ class App : RComponent<RProps, AppState>()
             }
         }
 
-//        child(components.gameSettings) {
-//            attrs.editable = isHost
-//            attrs.onSubmit = {
-//
-//            }
-//        }
+        child(components.GameSettings::class) {
+            attrs.editable = true
+            attrs.settings = state.party!!.state.settings
+            attrs.onSubmit = { newSettings ->
+                state.ws.launch {
+                    state.ws.send(SetGameSettingsJson(newSettings))
+                }
+            }
+        }
 
         button(classes = "btn btn-secondary mb-2") {
             +"Leave Party"
             attrs.onClickFunction = {
-                state.webSocketSession.launch {
-                    println("LeaveParty")
-                    state.webSocketSession.send(ActionType.LeaveParty) { response ->
+                println("LeaveParty")
+                state.ws.launch {
+                    state.ws.send(ActionType.LeaveParty) { response ->
                         if (response is StatusJson && response.status == StatusCode.Success)
                         {
                             setState {
-                                partyCode = null
+                                party = null
+                                lastPartyStatus = null
+                                chatHistory.clear()
                             }
                         }
                         else
@@ -224,8 +253,8 @@ class App : RComponent<RProps, AppState>()
                 setState {
                     chatHistory.add(log)
                 }
-                state.webSocketSession.launch {
-                    state.webSocketSession.send(ChatJson(message))
+                state.ws.launch {
+                    state.ws.send(ChatJson(message))
                 }
             }
         }

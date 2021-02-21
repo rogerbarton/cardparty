@@ -23,16 +23,6 @@ enum class ActionType
 @Serializable
 data class ActionJson(val action: ActionType) : BaseJson()
 
-enum class StatusCode(val status: Int)
-{
-    Success(0),
-    ServerError(1),
-    InvalidRequestType(2),
-    InvalidRequest(3),
-    AlreadyInAParty(12),
-    InvalidPartyCode(13),
-}
-
 @Serializable
 data class StatusJson(val status: StatusCode, val message: String? = null) : BaseJson()
 
@@ -56,13 +46,13 @@ data class CreatePartyResponseJson(val partyCode: String) : BaseJson()
 data class JoinPartyJson(val partyCode: String) : BaseJson()
 
 @Serializable
-data class JoinPartyResponseJson(val userToNames: Map<Int, String>) : BaseJson()
+data class JoinPartyResponseJson(val userToNames: Map<Int, String>, val host: Int, val state: GameState) : BaseJson()
 
 @Serializable
 data class JoinPartyBroadcastJson(val userId: Int, val name: String) : BaseJson()
 
 @Serializable
-data class LeavePartyBroadcastJson(val userId: Int) : BaseJson()
+data class LeavePartyBroadcastJson(val userId: Int, val newHost: Int?) : BaseJson()
 
 
 // --- Chat
@@ -75,8 +65,19 @@ data class ChatBroadcastJson(val userId: Int, val message: String) : BaseJson()
 
 // -- FunEmployed
 @Serializable
-data class SetGameStageJson(val stage: GameStage) : BaseJson()
+data class SetGameSettingsJson(val settings: GameSettings) : BaseJson()
 
+@Serializable
+data class GameSettings(
+    var cardsPerPlayer: Int = 4,
+//    var intervieweeCount: Int = 1,
+//    var interviewerCount: Int = 1,
+//    var interviewCategories: MutableSet<String> = mutableSetOf(),
+//    var intervieweeCategories: MutableSet<String> = mutableSetOf(),
+)
+
+@Serializable
+data class SetGameStageJson(val stage: GameState.Stage) : BaseJson()
 
 @Serializable
 data class AddWordJson(val value: String) : BaseJson()
