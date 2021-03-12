@@ -37,7 +37,7 @@ suspend fun Connection.onRequestReceived(data: JoinPartyJson)
     partyCode = data.partyCode
 
     party.broadcast(this, JoinPartyBroadcastJson(guid, name))
-    send(JoinPartyResponseJson(party.connections.associateBy({ it.guid }, { it.name }), party.host.guid, party.state))
+    send(JoinPartyResponseJson(party.connections.associateBy({ it.guid }, { it.name }), party.host.guid, party.game))
 }
 
 /**

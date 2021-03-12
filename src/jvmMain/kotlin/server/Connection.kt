@@ -65,3 +65,23 @@ suspend fun Connection.send(actionType: ActionType) = send(ActionJson(actionType
  * Helper for sending a status code
  */
 suspend fun Connection.send(status: StatusCode) = send(StatusJson(status) as BaseJson, status.name)
+
+suspend fun Connection.requireParty(): Boolean
+{
+    if(party == null)
+    {
+        send(StatusCode.InvalidPartyCode)
+        return true
+    }
+    return false
+}
+
+suspend fun Connection.requireHost(): Boolean
+{
+    if(this != party!!.host)
+    {
+        send(StatusCode.NotHost)
+        return true
+    }
+    return false
+}

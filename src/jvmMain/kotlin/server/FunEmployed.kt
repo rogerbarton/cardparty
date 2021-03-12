@@ -8,37 +8,36 @@ import common.*
 
 suspend fun Connection.onRequestReceived(json: SetGameSettingsJson)
 {
-    if(party == null)
-    {
-        send(StatusCode.InvalidPartyCode)
-        return
-    }
+    if(requireParty()) return
 
-    party!!.state.settings = json.settings
-    party!!.broadcast(this, SetGameSettingsJson(party!!.state.settings))
+    party!!.game.settings = json.settings
+    party!!.broadcast(this, SetGameSettingsJson(party!!.game.settings))
+    send(StatusCode.Success)
+}
+
+suspend fun Connection.onRequestReceived(json: AddCategoryJson)
+{
+    if(requireParty()) return
+
+    party!!.game.categories += json.value
+    party!!.broadcast(this, AddCategoryBroadcastJson(json.value))
     send(StatusCode.Success)
 }
 
 suspend fun Connection.onRequestReceived(json: AddWordJson)
 {
-    if(party == null)
-    {
-        send(StatusCode.InvalidPartyCode)
-        return
-    }
+    if(requireParty()) return
 
-    party!!.state.interviewWords += Word(json.value, false, 0)
+    party!!.game.interviewWords += Word(json.value)
     send(StatusCode.Success)
 }
 
-
 suspend fun Connection.onRequestReceived(json: SetGameStageJson)
 {
-    if(party == null)
-    {
-        send(StatusCode.InvalidPartyCode)
-        return
-    }
+    if(requireParty()) return
+    if(requireHost()) return
 
-    TODO()
+    party!!.broadcast(this, json)
+    party!!.game.stage = json.stage
+    send(StatusCode.Success)
 }

@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json
 class Party(val code: String, var host: Connection)
 {
     val connections = mutableSetOf(host)
-    var state: GameState = GameState()
+    var game: GameState = GameState()
 
     suspend fun broadcast(origin: Connection, message: BaseJson) = connections.broadcast(origin, message)
     suspend fun broadcast(origin: Connection, actionType: ActionType) = connections.broadcast(origin, actionType)

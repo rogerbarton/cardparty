@@ -34,5 +34,12 @@ enum class StatusCode(val status: Int)
         {
             return "Invalid party code"
         }
-    }
+    },
+    NotHost(15)
+    {
+        override fun toString(): String
+        {
+            return "You are not the host"
+        }
+    },
 }
