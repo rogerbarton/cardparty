@@ -1,5 +1,5 @@
 import kotlinx.browser.document
-import react.dom.*
+import react.dom.render
 
 fun main()
 {

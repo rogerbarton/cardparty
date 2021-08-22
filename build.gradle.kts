@@ -1,13 +1,12 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
-val kotlinVersion = "1.4.30"
-val ktorVersion = "1.5.1"
-val logbackVersion = "1.2.3"
+val kotlinVersion = "1.5.20"
+val ktorVersion = "1.6.2"
 
 plugins {
     application
-    kotlin("multiplatform") version "1.4.30"
-    kotlin("plugin.serialization") version "1.4.30"
+    kotlin("multiplatform") version "1.5.20"
+    kotlin("plugin.serialization") version "1.5.20"
 }
 
 group = "ch.rbarton"
@@ -42,7 +41,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
                 implementation("io.ktor:ktor-client-websockets:$ktorVersion")
             }
         }
@@ -51,8 +50,8 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-html-builder:$ktorVersion")
                 implementation("io.ktor:ktor-websockets:$ktorVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
-                implementation("ch.qos.logback:logback-classic:$logbackVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
+                implementation("ch.qos.logback:logback-classic:1.2.3")
 
                 // CLI tool
                 implementation("io.ktor:ktor-client-websockets:$ktorVersion")
@@ -62,18 +61,20 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation("io.ktor:ktor-client-js:$ktorVersion") //includes http&websockets
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.231-kotlin-1.5.21")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.231-kotlin-1.5.21")
 
-                implementation("org.jetbrains:kotlin-react:17.0.1-pre.144-kotlin-1.4.30")
-                implementation("org.jetbrains:kotlin-react-dom:17.0.1-pre.144-kotlin-1.4.30")
-                implementation(npm("react", "17.0.1"))
-                implementation(npm("react-dom", "17.0.1"))
-                implementation(npm("react-markdown", "5.0.3"))
+                implementation(npm("react", "17.0.2"))
+                implementation(npm("react-dom", "17.0.2"))
+                implementation(npm("@types/react", "17.0.2"))
+                implementation(npm("react-is", "17.0.2"))
+                implementation(npm("react-markdown", "7.0.0"))
 
-                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.144-kotlin-1.4.30")
-                implementation(npm("styled-components", "~5.2.1"))
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.0-pre.231-kotlin-1.5.21")
+                implementation(npm("styled-components", "~5.3.0"))
                 implementation(npm("inline-style-prefixer", "~6.0.0"))
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2-native-mt")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-native-mt")
             }
         }
     }

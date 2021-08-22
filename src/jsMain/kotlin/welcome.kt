@@ -1,22 +1,18 @@
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
 import org.w3c.dom.HTMLInputElement
-import react.RBuilder
-import react.RComponent
-import react.RProps
-import react.RState
-import styled.css
-import styled.styledDiv
-import styled.styledInput
+import react.*
+import react.dom.*
+import styled.*
 
 external interface WelcomeProps : RProps
 {
     var name: String
 }
 
-data class WelcomeState(val name: String) : RState
+data class WelcomeState(val name: String) : State
 
-@JsExport
+@ExperimentalJsExport
 class Welcome(props: WelcomeProps) : RComponent<WelcomeProps, WelcomeState>(props)
 {
 

@@ -4,7 +4,6 @@ import kotlinx.css.LinearDimension
 import kotlinx.css.fontSize
 import kotlinx.html.classes
 import react.RBuilder
-import react.dom.span
 import styled.css
 import styled.styledSpan
 

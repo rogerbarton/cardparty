@@ -6,6 +6,7 @@ import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.util.*
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.html.js.onClickFunction
 import react.*
@@ -18,7 +19,7 @@ data class Party(
     var state: GameState
 )
 
-external interface AppState : RState
+external interface AppState : State
 {
     var globalUserCount: Int
     var globalPartyCount: Int
@@ -39,7 +40,6 @@ external interface AppState : RState
 
 class App : RComponent<RProps, AppState>()
 {
-    @KtorExperimentalAPI
     override fun AppState.init()
     {
         chatHistory = mutableListOf()
@@ -211,15 +211,15 @@ class App : RComponent<RProps, AppState>()
             }
         }
 
-        child(components.GameSettings::class) {
-            attrs.editable = true
-            attrs.settings = state.party!!.state.settings
-            attrs.onSubmit = { newSettings ->
-                state.ws.launch {
-                    state.ws.send(SetGameSettingsJson(newSettings))
-                }
-            }
-        }
+//        child(components.GameSettings::class) {
+//            attrs.editable = true
+//            attrs.settings = state.party!!.state.settings
+//            attrs.onSubmit = { newSettings ->
+//                state.ws.launch {
+//                    state.ws.send(SetGameSettingsJson(newSettings))
+//                }
+//            }
+//        }
 
         button(classes = "btn btn-secondary mb-2") {
             +"Leave Party"

@@ -10,7 +10,7 @@ external interface WelcomeProps : RProps
     var partyCount: Int
 }
 
-val Welcome = functionalComponent<WelcomeProps> { props ->
+val Welcome = fc<WelcomeProps> { props ->
     h1 {
         +"Welcome to the word game!"
     }

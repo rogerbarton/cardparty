@@ -6,8 +6,8 @@ package components
 import react.*
 
 external interface ReactMarkdownProps : RProps {
-    var children: String
+    var items: String
 }
 
 @JsName("ReactMarkdown")
-external val reactMarkdown: RClass<ReactMarkdownProps>
+external val reactMarkdown: ComponentClass<ReactMarkdownProps>

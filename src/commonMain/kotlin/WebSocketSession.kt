@@ -1,10 +1,8 @@
 package common
 
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.launch
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Helper extension methods
@@ -12,7 +10,7 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  *  Allow us to send a payload directly.
- *  Wraps it in a [WrapperJson]
+ *  Wraps it in a Json
  */
 suspend fun WebSocketSession.send(payload: BaseJson) =
     send(Json.encodeToString(payload))

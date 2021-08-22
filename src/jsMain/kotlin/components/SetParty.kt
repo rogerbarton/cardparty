@@ -19,7 +19,7 @@ external interface SetPartyProps : RProps
     var onDismissLastStatus: (Event) -> Unit
 }
 
-val SetParty = functionalComponent<SetPartyProps> { props ->
+val SetParty = fc<SetPartyProps> { props ->
     val (inputText, setInputText) = useState("")
 
     button(classes = "btn btn-secondary mb-2 mx-auto d-block shadow") {

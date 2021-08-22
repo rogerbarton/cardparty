@@ -18,7 +18,7 @@ external interface UsersListProps : RProps
     var onSetName: (String) -> Unit
 }
 
-val usersList = functionalComponent<UsersListProps> { props ->
+val usersList = fc<UsersListProps> { props ->
     val (isEditingName, setIsEditingName) = useState(false)
     val (nameInput, setNameInput) = useState(props.users[props.thisUser]!!)
 
