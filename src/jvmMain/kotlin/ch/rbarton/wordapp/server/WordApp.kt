@@ -3,7 +3,7 @@ package ch.rbarton.wordapp.server
 import ch.rbarton.wordapp.common.*
 
 /**
- * Handles requests made by users in a FunEmployed game session
+ * Handles requests made by users in a word game session
  */
 
 suspend fun Connection.onRequestReceived(json: SetGameSettingsJson)

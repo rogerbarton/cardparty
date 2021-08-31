@@ -63,7 +63,7 @@ data class ChatJson(val message: String) : BaseJson()
 data class ChatBroadcastJson(val userId: Int, val message: String) : BaseJson()
 
 
-// -- FunEmployed
+// -- Word Game
 @Serializable
 data class SetGameSettingsJson(val settings: GameSettings) : BaseJson()
 
