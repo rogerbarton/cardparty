@@ -82,7 +82,7 @@ kotlin {
 
 application {
     applicationName = "server"
-    mainClassName = "server.ServerKt"
+    mainClassName = "ch.rbarton.wordapp.server.ServerKt"
 }
 
 val cliTask = tasks.register("cli", CreateStartScripts::class){
