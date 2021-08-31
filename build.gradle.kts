@@ -81,8 +81,17 @@ kotlin {
 }
 
 application {
+    applicationName = "server"
     mainClassName = "server.ServerKt"
 }
+
+val cliTask = tasks.register("cli", CreateStartScripts::class){
+    applicationName = "cli"
+    mainClassName = "cli.CliKt"
+    dependsOn(tasks.getByName<Jar>("jvmJar"))
+    outputDir = file("build/scripts")
+}
+
 
 tasks.getByName<KotlinWebpack>("jsBrowserDevelopmentWebpack") {
     outputFileName = "client.js"
