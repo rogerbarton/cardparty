@@ -1,4 +1,4 @@
-package ch.rbarton.wordapp.server.connection
+package ch.rbarton.wordapp.server
 
 import ch.rbarton.wordapp.common.request.*
 

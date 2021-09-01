@@ -1,11 +1,11 @@
-package ch.rbarton.wordapp.server
+package ch.rbarton.wordapp.server.request
 
 import ch.rbarton.wordapp.common.data.Word
 import ch.rbarton.wordapp.common.request.*
-import ch.rbarton.wordapp.server.connection.Connection
-import ch.rbarton.wordapp.server.connection.requireHost
-import ch.rbarton.wordapp.server.connection.requireParty
-import ch.rbarton.wordapp.server.connection.send
+import ch.rbarton.wordapp.server.Connection
+import ch.rbarton.wordapp.server.requireHost
+import ch.rbarton.wordapp.server.requireParty
+import ch.rbarton.wordapp.server.send
 
 /**
  * Handles requests made by users in a word game session

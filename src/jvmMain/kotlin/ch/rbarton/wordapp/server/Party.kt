@@ -5,20 +5,19 @@ import ch.rbarton.wordapp.common.data.PartyOptions
 import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.BaseJson
 import ch.rbarton.wordapp.common.request.LeavePartyBroadcastJson
-import ch.rbarton.wordapp.server.connection.Connection
-import ch.rbarton.wordapp.server.connection.broadcast
 
 /**
  * Holds all data generic to a party, a group of connections.
  */
 class Party(
     val code: String,
-    var host: Connection,
-    val connections: MutableSet<Connection> = mutableSetOf(host),
-    var options: PartyOptions = PartyOptions(),
-    var game: GameState = GameState()
+    var host: Connection
 )
 {
+    val connections: MutableSet<Connection> = mutableSetOf(host)
+    var options: PartyOptions = PartyOptions()
+    var game: GameState = GameState()
+
     suspend fun broadcast(origin: Connection, message: BaseJson) = connections.broadcast(origin, message)
     suspend fun broadcast(origin: Connection, actionType: ActionType) = connections.broadcast(origin, actionType)
 
