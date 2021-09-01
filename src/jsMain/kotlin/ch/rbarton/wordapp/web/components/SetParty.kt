@@ -1,14 +1,18 @@
 package ch.rbarton.wordapp.web.components
 
-import ch.rbarton.wordapp.common.StatusCode
-import ch.rbarton.wordapp.common.StatusJson
+import ch.rbarton.wordapp.common.request.StatusCode
+import ch.rbarton.wordapp.common.request.StatusJson
 import kotlinx.html.InputType
-import kotlinx.html.js.*
+import kotlinx.html.js.onChangeFunction
+import kotlinx.html.js.onClickFunction
+import kotlinx.html.js.onSubmitFunction
 import kotlinx.html.role
-import react.*
-import react.dom.*
-import org.w3c.dom.events.Event
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.events.Event
+import react.RProps
+import react.dom.*
+import react.fc
+import react.useState
 
 external interface SetPartyProps : RProps
 {

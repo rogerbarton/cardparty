@@ -1,8 +1,9 @@
 package ch.rbarton.wordapp.web
 
+import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.data.GameState
+import ch.rbarton.wordapp.common.request.*
 import ch.rbarton.wordapp.web.components.*
-import ch.rbarton.wordapp.common.*
-
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
@@ -11,7 +12,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.html.js.onClickFunction
 import react.*
-import react.dom.*
+import react.dom.button
+import react.dom.h1
+import react.dom.h2
+import react.dom.span
 
 data class Party(
     val code: String,

@@ -1,5 +1,6 @@
-package ch.rbarton.wordapp.common
+package ch.rbarton.wordapp.common.data
 
+import ch.rbarton.wordapp.common.request.GameSettings
 import kotlinx.serialization.Serializable
 
 @Serializable

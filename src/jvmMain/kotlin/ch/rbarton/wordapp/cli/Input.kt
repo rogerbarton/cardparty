@@ -1,6 +1,7 @@
 package ch.rbarton.wordapp.cli
 
-import ch.rbarton.wordapp.common.*
+import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.request.*
 import io.ktor.client.features.websocket.*
 
 suspend fun DefaultClientWebSocketSession.inputMessages()

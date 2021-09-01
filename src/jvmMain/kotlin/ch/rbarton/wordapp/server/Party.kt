@@ -1,19 +1,24 @@
 package ch.rbarton.wordapp.server
 
-import ch.rbarton.wordapp.common.*
-
-import io.ktor.http.cio.websocket.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import ch.rbarton.wordapp.common.data.GameState
+import ch.rbarton.wordapp.common.data.PartyOptions
+import ch.rbarton.wordapp.common.request.ActionType
+import ch.rbarton.wordapp.common.request.BaseJson
+import ch.rbarton.wordapp.common.request.LeavePartyBroadcastJson
+import ch.rbarton.wordapp.server.connection.Connection
+import ch.rbarton.wordapp.server.connection.broadcast
 
 /**
  * Holds all data generic to a party, a group of connections.
  */
-class Party(val code: String, var host: Connection)
-{
-    val connections = mutableSetOf(host)
+class Party(
+    val code: String,
+    var host: Connection,
+    val connections: MutableSet<Connection> = mutableSetOf(host),
+    var options: PartyOptions = PartyOptions(),
     var game: GameState = GameState()
-
+)
+{
     suspend fun broadcast(origin: Connection, message: BaseJson) = connections.broadcast(origin, message)
     suspend fun broadcast(origin: Connection, actionType: ActionType) = connections.broadcast(origin, actionType)
 
@@ -33,29 +38,4 @@ class Party(val code: String, var host: Connection)
 
         broadcast(connection, LeavePartyBroadcastJson(connection.guid, if (hostChanged) host.guid else null))
     }
-}
-
-/**
- * Broadcast message to all other members, except the origin connection
- */
-suspend fun Collection<Connection>.broadcast(origin: Connection, payload: BaseJson)
-{
-    val payloadText = Json.encodeToString(payload)
-    forEach {
-        if (it != origin)
-            it.session.send(payloadText)
-    }
-
-    println(">-[${origin.guid}:${origin.name}] $payloadText")
-}
-
-suspend fun Collection<Connection>.broadcast(origin: Connection?, actionType: ActionType)
-{
-    val payloadText = Json.encodeToString(ActionJson(actionType) as BaseJson)
-    forEach {
-        if (it != origin)
-            it.session.send(payloadText)
-    }
-
-    println(">-[${origin?.guid}:${origin?.name ?: "-"}] $actionType")
 }

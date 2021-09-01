@@ -1,8 +1,9 @@
-package ch.rbarton.wordapp.common
+package ch.rbarton.wordapp.common.connection
 
+import ch.rbarton.wordapp.common.request.*
 import io.ktor.http.cio.websocket.*
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * Helper extension methods

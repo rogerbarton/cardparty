@@ -1,9 +1,11 @@
 package ch.rbarton.wordapp.server
 
-import ch.rbarton.wordapp.common.InitJson
-import ch.rbarton.wordapp.common.StatusCode
-import ch.rbarton.wordapp.common.send
-
+import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.request.InitJson
+import ch.rbarton.wordapp.common.request.StatusCode
+import ch.rbarton.wordapp.server.connection.Connection
+import ch.rbarton.wordapp.server.connection.onJsonReceived
+import ch.rbarton.wordapp.server.connection.send
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
@@ -14,10 +16,10 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.websocket.*
-import kotlinx.serialization.*
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.util.*
-import kotlin.collections.*
 
 val allConnections: MutableSet<Connection> = Collections.synchronizedSet<Connection?>(LinkedHashSet())
 val parties: MutableMap<String, Party> = Collections.synchronizedMap<String, Party>(LinkedHashMap())

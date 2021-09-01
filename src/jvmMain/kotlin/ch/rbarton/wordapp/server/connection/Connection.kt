@@ -1,19 +1,14 @@
-package ch.rbarton.wordapp.server
+package ch.rbarton.wordapp.server.connection
 
-import ch.rbarton.wordapp.common.*
-
+import ch.rbarton.wordapp.common.request.*
+import ch.rbarton.wordapp.server.Party
+import ch.rbarton.wordapp.server.onRequestReceived
+import ch.rbarton.wordapp.server.parties
 import io.ktor.http.cio.websocket.*
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class Connection(val session: DefaultWebSocketSession)
 {
-    companion object
-    {
-        var lastId = AtomicInteger(0)
-    }
-
     val guid = lastId.getAndIncrement()
     var name = "user${guid}"
     var partyCode: String? = null
@@ -22,6 +17,11 @@ class Connection(val session: DefaultWebSocketSession)
 
     // Current id of request being processed, assumes that only one is handled at a time
     var currentRequestId: Int? = null
+
+    companion object
+    {
+        var lastId = AtomicInteger(0)
+    }
 }
 
 /**
@@ -44,27 +44,6 @@ suspend fun Connection.onJsonReceived(json: BaseJson)
     }
     currentRequestId = null
 }
-
-/**
- *  Allow us to send a payload directly. Sets correct requestId
- */
-suspend fun Connection.send(payload: BaseJson, debugOutput: String? = null)
-{
-    payload.requestId = currentRequestId
-    val payloadText: String = Json.encodeToString(payload)
-    session.send(payloadText)
-    println("->[${guid}:${name}] ${debugOutput ?: payloadText}")
-}
-
-/**
- * Send an empty payload. Use this for RPCs without data.
- */
-suspend fun Connection.send(actionType: ActionType) = send(ActionJson(actionType) as BaseJson, actionType.name)
-
-/**
- * Helper for sending a status code
- */
-suspend fun Connection.send(status: StatusCode) = send(StatusJson(status) as BaseJson, status.name)
 
 suspend fun Connection.requireParty(): Boolean
 {

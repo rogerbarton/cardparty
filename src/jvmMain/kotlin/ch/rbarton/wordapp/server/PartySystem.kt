@@ -1,6 +1,9 @@
 package ch.rbarton.wordapp.server
 
-import ch.rbarton.wordapp.common.*
+import ch.rbarton.wordapp.common.request.*
+import ch.rbarton.wordapp.server.connection.Connection
+import ch.rbarton.wordapp.server.connection.broadcast
+import ch.rbarton.wordapp.server.connection.send
 
 import kotlin.collections.*
 
@@ -79,9 +82,10 @@ suspend fun Connection.createParty()
 
 //    partyCode = (0..10).random().toString()
     partyCode = "6"
-    parties[partyCode!!] = Party(partyCode!!, this)
+    val party = Party(partyCode!!, this)
+    parties[partyCode!!] = party
 
-    send(CreatePartyResponseJson(partyCode!!))
+    send(CreatePartyResponseJson(partyCode!!, party.options))
 }
 
 suspend fun Connection.leaveParty()

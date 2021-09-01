@@ -1,4 +1,4 @@
-package ch.rbarton.wordapp.common
+package ch.rbarton.wordapp.common.request
 
 const val ApiVersion = 1
 
