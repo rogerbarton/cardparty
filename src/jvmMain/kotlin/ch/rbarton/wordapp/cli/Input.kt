@@ -1,13 +1,15 @@
 package ch.rbarton.wordapp.cli
 
+import ch.rbarton.wordapp.cli.data.Party
 import ch.rbarton.wordapp.common.connection.send
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.client.features.websocket.*
+import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun DefaultClientWebSocketSession.inputMessages()
 {
-    send(UserInfo.SetNameRequest(name))
+    send(UserInfo.SetNameRequest(connection.name))
 
     while (true)
     {
@@ -53,8 +55,8 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     return
                 }
 
-                name = args
-                send(UserInfo.SetNameRequest(name)) { response ->
+                connection.name = args
+                send(UserInfo.SetNameRequest(connection.name)) { response ->
                     when
                     {
                         response !is StatusResponse -> println("SetName: $response")
@@ -63,7 +65,17 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     }
                 }
             }
-            "create" -> send(ActionType.PartyCreate)
+            "create" -> send(ActionType.PartyCreate) { response ->
+                when (response)
+                {
+                    is PartyRequest.CreateResponse ->
+                    {
+                        party = Party(0, mutableMapOf(0 to connection.name), response.partyCode, response.partyOptions)
+                        println("Created party with code: ${response.partyCode}")
+                    }
+                    else -> println("Error in create party: $response")
+                }
+            }
             "join" ->
             {
                 if (args == null)
@@ -72,17 +84,23 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     return
                 }
 
-                send(Party.JoinRequest(args)) { response ->
-                    if (response is Party.JoinResponse)
+                send(PartyRequest.JoinRequest(args)) { response ->
+                    when (response)
                     {
-                        partyCode = args
-                        users = response.userToNames.toMutableMap()
-                        println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
+                        is PartyRequest.JoinResponse ->
+                        {
+                            party = Party(response.puid, response.userToNames.toMutableMap(), args, response.options)
+                            println(
+                                "Joined party with ${party!!.users.size} users: ${
+                                    party!!.users.values.joinToString(
+                                        ", "
+                                    )
+                                }"
+                            )
+                        }
+                        is StatusResponse -> println("Join Party: ${response.status}")
+                        else -> println("Error in JoinParty: $response")
                     }
-                    else if (response is StatusResponse)
-                        println("Join Party: ${response.status}")
-                    else
-                        println("Error in JoinParty: $response")
                 }
             }
             "chat" ->
@@ -100,9 +118,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 send(ActionType.PartyLeave) { response ->
                     if (response is StatusResponse && response.status == StatusCode.Success)
                     {
-                        users = null
-                        puid = null
-                        partyCode = null
+                        party = null
                         println("Left party")
                     }
                     else
@@ -121,49 +137,84 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 else
                     when (args)
                     {
-                        "users", "names" -> println("users: ${users?.values?.joinToString(", ")}")
-                        "party", "code" -> println("partyCode: $partyCode")
+                        "users", "names" -> println("users: ${party?.users?.values?.joinToString(", ")}")
+                        "party", "code" -> println("partyCode: ${party?.code}")
                         else -> println("Unknown argument: $args")
                     }
             }
             "set" ->
             {
                 if (args == null)
+                {
                     println(
                         """
                         Use: set [key] [value]
                           1. partymode
                         """.trimIndent()
                     )
-                else
-                {
-                    val (key, value) = splitFirstSpace(args)
-                    if (value == null)
-                        println("Must give a value.")
-                    else
-                        when (key)
-                        {
-                            "partymode" ->
-                            {
-                                val mode: PartyMode? = PartyMode.values().firstOrNull { it.ordinal == value.toInt() }
-                                if (mode == null)
-                                    println("Invalid value.")
-                                else
-                                    send(PartyOptions.SetPartyModeRequest(mode))
-                            }
-                            else -> println("Unknown key: $key")
-                        }
+                    return
                 }
+
+                val (key, value) = splitFirstSpace(args)
+                if (value == null)
+                    println("Must give a value.")
+                else
+                    when (key)
+                    {
+                        "partymode" ->
+                        {
+                            val mode: PartyMode? = PartyMode.values().firstOrNull { it.ordinal == value.toInt() }
+                            if (mode == null)
+                                println("Invalid value.")
+                            else
+                                send(PartyOptions.SetPartyModeRequest(mode))
+                        }
+                        else -> println("Unknown key: $key")
+                    }
             }
-            "addcard" ->
+            "addword" ->
             {
                 if (args == null)
                 {
-                    println("Use: addcard [text]")
+                    println("Use: addword [text]")
                     return
                 }
 
                 send(WordGame.AddWordRequest(args, "General"))
+            }
+            "print" ->
+            {
+                if (args == null)
+                {
+                    println(
+                        """
+                        Use: print [key]
+                          1. code
+                          2. users
+                          3. words
+                          4. categories
+                        Prints local state
+                        """.trimIndent()
+                    )
+                    return
+
+                }
+
+                val (key, value) = splitFirstSpace(args)
+                if (value == null)
+                {
+                    println("Must give a value.")
+                    return
+                }
+
+                when (key)
+                {
+                    "code" -> println(party?.code)
+                    "users" -> println(party?.users)
+                    "words" -> println(party?.gameState?.interviewWords)
+                    "categories" -> println(party?.gameState?.categories)
+                    else -> println("Unknown key: $key")
+                }
             }
             else -> println("Invalid command")
         }

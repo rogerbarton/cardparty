@@ -9,7 +9,7 @@ data class Word(val value: String, val visible: Boolean = false)
 class GameState(
     var stage: Stage = Stage.Lobby,
     var settings: GameSettings = GameSettings(),
-    val categories: MutableSet<String> = mutableSetOf(),
+    val categories: MutableSet<String> = mutableSetOf("General"),
     val interviewWords: MutableSet<Word> = mutableSetOf(),
     val intervieweeWords: MutableSet<Word> = mutableSetOf()
 )

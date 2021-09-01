@@ -26,4 +26,5 @@ enum class StatusCode(val status: Int)
     {
         override fun toString() = "You are not the host"
     },
+    NotInAGame(16),
 }

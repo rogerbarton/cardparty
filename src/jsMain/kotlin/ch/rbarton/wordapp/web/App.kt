@@ -26,7 +26,7 @@ data class Party(
     val code: String,
     var users: MutableMap<Int, String>,
     var host: Int,
-    var state: GameState
+    var state: GameState?
 )
 
 external interface AppState : State
@@ -172,7 +172,7 @@ class App : RComponent<RProps, AppState>()
                                         value,
                                         response.userToNames.toMutableMap(),
                                         response.host,
-                                        response.state
+                                        response.gameState
                                     )
                                 }
                                 println("Joined party with ${state.party!!.users.size} users")

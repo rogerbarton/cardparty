@@ -9,6 +9,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun DefaultClientWebSocketSession.outputMessages()
 {
@@ -29,8 +30,7 @@ suspend fun DefaultClientWebSocketSession.outputMessages()
     }
 }
 
-@Suppress("RedundantSuspendModifier")
-private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: String)
+private fun onFrameReceived(rawText: String)
 {
 //    println(rawText)
 
@@ -39,11 +39,8 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
         // Handle incoming messages differently depending on if they have a matching requestId
         val json = Json.decodeFromString<BaseRequest>(rawText)
         if (json.requestId == null)
-        {
             handleUnidentifiedResponse(json, rawText)
-        }
         else
-        {
             if (responseHandlerQueue.contains(json.requestId))
                 responseHandlerQueue[json.requestId!!]!!.invoke(json)
             else
@@ -51,7 +48,6 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
                     "<~[server] InvalidRequestId: BaseRequest.requestId = ${json.requestId} " +
                             "has no corresponding responseHandler in responseHandlerQueue.\n"
                 )
-        }
     }
     catch (e: SerializationException)
     {
@@ -59,53 +55,65 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
     }
 }
 
-@Suppress("unused")
-private fun DefaultClientWebSocketSession.handleUnidentifiedResponse(json: BaseRequest, rawText: String)
+private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
 {
-    when (json)
+    when (response)
     {
         is InitResponse ->
         {
-            guid = json.guid
-            println("Hi, there are ${json.userCount} people and ${json.parties.size} parties here.")
+            connection.guid = response.guid
+            println("Hi, there are ${response.userCount} people and ${response.parties.size} parties here.")
             var i = 1
-            json.parties.forEach {
+            response.parties.forEach {
                 println("\t${i++.toString().padStart(2)}. ${it.key} (${it.value})")
             }
         }
-        is StatusResponse -> println("${json.status.name}${if (json.message != null) ": ${json.message}" else ""}")
-        is ActionRequest -> println(json.action.name)
+        is StatusResponse -> println("${response.status.name}${if (response.message != null) ": ${response.message}" else ""}")
+        is ActionRequest -> println(response.action.name)
         is UserInfo.SetNameBroadcast ->
         {
-            println("[${json.userId}:${users!![json.userId]}] Changed name to ${json.name}")
-            users!![json.userId] = json.name
+            if (party != null)
+            {
+                println("[${response.userId}:${party!!.users[response.userId]}] Changed name to ${response.name}")
+                party!!.users[response.userId] = response.name
+            }
         }
-        is Party.CreateResponse ->
+        is PartyRequest.JoinBroadcast ->
         {
-            users = mutableMapOf(0 to name)
-            partyCode = json.partyCode
-            partyOptions = json.partyOptions
-            println("Created party with code: ${json.partyCode}")
+            if (party == null) return
+
+            party!!.users[response.userId] = response.name
+            println("[${response.userId}:${response.name}] Joined party")
         }
-        is Party.JoinResponse ->
+        is PartyRequest.LeaveBroadcast ->
         {
-            users = json.userToNames.toMutableMap()
-            println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
+            if (party == null) return
+
+            println("[${response.userId}:${party!!.users[response.userId]}] Left party")
+            party!!.users.remove(response.userId)
         }
-        is Party.JoinBroadcast ->
+        is PartyOptions.SetPartyModeBroadcast ->
         {
-            users!![json.userId] = json.name
-            println("[${json.userId}:${json.name}] Joined party")
-        }
-        is Party.LeaveBroadcast ->
-        {
-            println("[${json.userId}:${users!![json.userId]}] Left party")
-            users!!.remove(json.userId)
+            if (party == null) return
+
+            party!!.gameMode = response.mode
+            party!!.gameState = response.gameState
         }
         is Chat.MessageBroadcast ->
         {
-            println("[${json.userId}:${users?.get(json.userId)}]: ${json.message}")
+            if (party != null)
+                println("[${response.userId}:${party!!.users.get(response.userId)}]: ${response.message}")
         }
-        else -> println("-> $rawText")
+        is WordGame.AddWordBroadcast ->
+        {
+            if (party == null) return
+            println("${response.value} added to ${response.category}")
+        }
+        is WordGame.AddCategoryBroadcast ->
+        {
+            if (party == null) return
+            println("Category ${response.value} added")
+        }
+        else -> println("-> Unhandled Message: $rawText")
     }
 }

@@ -39,7 +39,13 @@ class Party
     data class JoinRequest(val partyCode: String) : BaseRequest()
 
     @Serializable
-    data class JoinResponse(val userToNames: Map<Int, String>, val host: Int, val state: GameState) : BaseRequest()
+    data class JoinResponse(
+        val puid: Int,
+        val userToNames: Map<Int, String>,
+        val host: Int,
+        val options: PartyOptions,
+        val gameState: GameState?
+    ) : BaseRequest()
 
     @Serializable
     data class JoinBroadcast(val userId: Int, val name: String) : BaseRequest()
@@ -53,6 +59,9 @@ class PartyOptions
 {
     @Serializable
     data class SetPartyModeRequest(val mode: PartyMode) : BaseRequest()
+
+    @Serializable
+    data class SetPartyModeBroadcast(val mode: PartyMode, val gameState: GameState) : BaseRequest()
 }
 
 

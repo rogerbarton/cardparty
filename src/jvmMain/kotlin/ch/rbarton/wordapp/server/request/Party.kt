@@ -19,7 +19,7 @@ suspend fun Connection.createParty()
 
 //    partyCode = (0..10).random().toString()
     partyCode = "6"
-    val party = Party(partyCode!!, this)
+    val party = Party(this, partyCode!!)
     parties[partyCode!!] = party
 
     send(PartyRequest.CreateResponse(partyCode!!, party.options))
@@ -53,9 +53,11 @@ suspend fun Connection.onRequestReceived(data: PartyRequest.JoinRequest)
     party.broadcast(this, PartyRequest.JoinBroadcast(guid, name))
     send(
         PartyRequest.JoinResponse(
+            party.connections.size,
             party.connections.associateBy({ it.guid }, { it.name }),
             party.host.guid,
-            party.game
+            party.options,
+            party.gameState
         )
     )
 }

@@ -1,6 +1,5 @@
 package ch.rbarton.wordapp.web
 
-import ch.rbarton.wordapp.common.*
 import ch.rbarton.wordapp.common.connection.responseHandlerQueue
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.http.cio.websocket.*
@@ -121,9 +120,9 @@ fun App.handleUnidentifiedResponse(json: BaseRequest)
         }
         is WordGame.SetGameSettingsRequest ->
         {
-            if (state.party == null) return
+            if (state.party == null || state.party!!.state == null) return
             setState {
-                party!!.state.settings = json.settings
+                party!!.state!!.settings = json.settings
             }
         }
         else -> println("-> $json")

@@ -25,7 +25,7 @@ suspend fun Connection.requireParty(): Boolean
 {
     if(party == null)
     {
-        send(StatusCode.InvalidPartyCode)
+        send(StatusCode.NotInAParty)
         return true
     }
     return false
@@ -33,9 +33,19 @@ suspend fun Connection.requireParty(): Boolean
 
 suspend fun Connection.requireHost(): Boolean
 {
-    if(this != party!!.host)
+    if (this != party!!.host)
     {
         send(StatusCode.NotHost)
+        return true
+    }
+    return false
+}
+
+suspend fun Connection.requireGameState(): Boolean
+{
+    if (party!!.gameState == null)
+    {
+        send(StatusCode.NotInAGame)
         return true
     }
     return false
