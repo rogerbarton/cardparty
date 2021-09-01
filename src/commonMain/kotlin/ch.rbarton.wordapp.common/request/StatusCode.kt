@@ -1,7 +1,5 @@
 package ch.rbarton.wordapp.common.request
 
-const val ApiVersion = 1
-
 enum class StatusCode(val status: Int)
 {
     Success(0),
