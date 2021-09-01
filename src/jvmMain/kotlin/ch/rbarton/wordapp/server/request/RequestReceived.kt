@@ -16,6 +16,7 @@ suspend fun Connection.onJsonReceived(json: BaseRequest)
         is ActionRequest -> onRequestReceived(json)
         is UserInfo.SetNameRequest -> onRequestReceived(json)
         is Party.JoinRequest -> onRequestReceived(json)
+        is PartyOptions.SetPartyModeRequest -> onRequestReceived(json)
         is Chat.MessageRequest -> onRequestReceived(json)
 
         is WordGame.SetGameSettingsRequest -> onRequestReceived(json)
