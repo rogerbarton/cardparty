@@ -80,6 +80,7 @@ private fun DefaultClientWebSocketSession.handleUnidentifiedResponse(json: BaseJ
         {
             users = mutableMapOf(0 to name)
             partyCode = json.partyCode
+            partyOptions = json.partyOptions
             println("Created party with code: ${json.partyCode}")
         }
         is JoinPartyResponseJson ->

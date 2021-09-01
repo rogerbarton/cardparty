@@ -27,7 +27,7 @@ data class ActionJson(val action: ActionType) : BaseJson()
 
 //region Party
 @Serializable
-data class CreatePartyResponseJson(val partyCode: String, val options: PartyOptions) : BaseJson()
+data class CreatePartyResponseJson(val partyCode: String, val partyOptions: PartyOptions) : BaseJson()
 
 @Serializable
 data class JoinPartyJson(val partyCode: String) : BaseJson()

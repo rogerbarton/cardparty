@@ -1,5 +1,6 @@
 package ch.rbarton.wordapp.cli
 
+import ch.rbarton.wordapp.common.data.PartyOptions
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
@@ -14,6 +15,7 @@ var serverPort = 8080
 var guid: Int? = null
 var puid: Int? = null
 var partyCode: String? = null
+var partyOptions: PartyOptions? = null
 
 var name: String = ""
 var users: MutableMap<Int, String>? = null

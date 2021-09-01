@@ -24,6 +24,23 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
     {
         when (args[0])
         {
+            "help" ->
+            {
+                println(
+                    """
+                    setname [new name]
+                    
+                    -- When not in a party:
+                    create
+                    join [party code]
+                    
+                    -- When in a party:
+                    chat [message]
+                    get [attribute]
+                    leave                    
+                """.trimIndent()
+                )
+            }
             "setname" ->
             {
                 if (args.size <= 1)
@@ -100,7 +117,16 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
                                 "  2. party | code"
                     )
                 }
+            }
+            "addcard" ->
+            {
+                if (args.size <= 1)
+                {
+                    println("Use: addcard [text]")
+                    return
+                }
 
+                send(AddWordJson(args[1], "General"))
             }
             else -> println("Invalid command")
         }
