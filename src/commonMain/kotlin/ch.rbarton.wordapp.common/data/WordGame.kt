@@ -1,6 +1,5 @@
 package ch.rbarton.wordapp.common.data
 
-import ch.rbarton.wordapp.common.request.GameSettings
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -22,3 +21,12 @@ class GameState(
         Main,
     }
 }
+
+@Serializable
+data class GameSettings(
+    var cardsPerPlayer: Int = 4,
+    var intervieweeCount: Int = 1,
+    var interviewerCount: Int = 1,
+    var interviewCategories: MutableSet<String> = mutableSetOf(),
+    var intervieweeCategories: MutableSet<String> = mutableSetOf(),
+)

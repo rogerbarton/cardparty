@@ -8,18 +8,18 @@ import ch.rbarton.wordapp.server.send
  * Handles the received request and sends a response
  * Multiplexer of different json types
  */
-suspend fun Connection.onJsonReceived(json: BaseJson)
+suspend fun Connection.onJsonReceived(json: BaseRequest)
 {
     currentRequestId = json.requestId
     when (json)
     {
-        is ActionJson -> onRequestReceived(json)
-        is SetNameJson -> onRequestReceived(json)
-        is JoinPartyJson -> onRequestReceived(json)
-        is ChatJson -> onRequestReceived(json)
+        is ActionRequest -> onRequestReceived(json)
+        is UserInfo.SetNameRequest -> onRequestReceived(json)
+        is Party.JoinRequest -> onRequestReceived(json)
+        is Chat.MessageRequest -> onRequestReceived(json)
 
-        is SetGameSettingsJson -> onRequestReceived(json)
-        is AddWordJson -> onRequestReceived(json)
+        is WordGame.SetGameSettingsRequest -> onRequestReceived(json)
+        is WordGame.AddWordRequest -> onRequestReceived(json)
         else -> send(StatusCode.InvalidRequestType)
     }
     currentRequestId = null
@@ -28,11 +28,11 @@ suspend fun Connection.onJsonReceived(json: BaseJson)
 /**
  * Multiplexer of different actions without a backing json data class
  */
-suspend fun Connection.onRequestReceived(json: ActionJson)
+suspend fun Connection.onRequestReceived(json: ActionRequest)
 {
     when (json.action)
     {
-        ActionType.CreateParty -> createParty()
-        ActionType.LeaveParty -> leaveParty()
+        ActionType.PartyCreate -> createParty()
+        ActionType.PartyLeave -> leaveParty()
     }
 }

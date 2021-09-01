@@ -1,7 +1,7 @@
 package ch.rbarton.wordapp.web.components
 
 import ch.rbarton.wordapp.common.request.StatusCode
-import ch.rbarton.wordapp.common.request.StatusJson
+import ch.rbarton.wordapp.common.request.StatusResponse
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onClickFunction
@@ -19,7 +19,7 @@ external interface SetPartyProps : RProps
     var partyCode: String?
     var onCreateParty: (Event) -> Unit
     var onJoinParty: (String) -> Unit
-    var lastStatus: StatusJson?
+    var lastStatus: StatusResponse?
     var onDismissLastStatus: (Event) -> Unit
 }
 

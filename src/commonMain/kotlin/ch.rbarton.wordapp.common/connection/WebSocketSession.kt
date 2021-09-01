@@ -13,26 +13,26 @@ import kotlinx.serialization.json.Json
  *  Allow us to send a payload directly.
  *  Wraps it in a Json
  */
-suspend fun WebSocketSession.send(payload: BaseJson) =
+suspend fun WebSocketSession.send(payload: BaseRequest) =
     send(Json.encodeToString(payload))
 
 /**
  * Use this for RPCs without data, signal only.
  */
 suspend fun WebSocketSession.send(actionType: ActionType) =
-    send(ActionJson(actionType))
+    send(ActionRequest(actionType))
 
 suspend fun WebSocketSession.send(status: StatusCode) =
-    send(StatusJson(status))
+    send(StatusResponse(status))
 
-val responseHandlerQueue: MutableMap<Int, (BaseJson) -> Unit> = mutableMapOf()
+val responseHandlerQueue: MutableMap<Int, (BaseRequest) -> Unit> = mutableMapOf()
 
-suspend fun WebSocketSession.send(payload: BaseJson, onResponse: (BaseJson) -> Unit)
+suspend fun WebSocketSession.send(payload: BaseRequest, onResponse: (BaseRequest) -> Unit)
 {
     payload.requestId = genRequestId()
     responseHandlerQueue[payload.requestId!!] = onResponse
     send(payload)
 }
 
-suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseJson) -> Unit) =
-    send(ActionJson(actionType), onResponse)
+suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseRequest) -> Unit) =
+    send(ActionRequest(actionType), onResponse)

@@ -2,7 +2,10 @@ package ch.rbarton.wordapp.web
 
 import ch.rbarton.wordapp.common.connection.send
 import ch.rbarton.wordapp.common.data.GameState
-import ch.rbarton.wordapp.common.request.*
+import ch.rbarton.wordapp.common.request.ActionType
+import ch.rbarton.wordapp.common.request.StatusCode
+import ch.rbarton.wordapp.common.request.StatusResponse
+import ch.rbarton.wordapp.common.request.UserInfo
 import ch.rbarton.wordapp.web.components.*
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
@@ -16,6 +19,8 @@ import react.dom.button
 import react.dom.h1
 import react.dom.h2
 import react.dom.span
+import ch.rbarton.wordapp.common.request.Chat as ChatRequest
+import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 data class Party(
     val code: String,
@@ -35,7 +40,7 @@ external interface AppState : State
     var party: Party?
 
     var chatHistory: MutableList<String>
-    var lastPartyStatus: StatusJson?
+    var lastPartyStatus: StatusResponse?
 
     var serverAddress: String
     var serverPort: Int
@@ -111,7 +116,7 @@ class App : RComponent<RProps, AppState>()
                 }
                 state.ws.launch {
                     println("setname: ${state.name}")
-                    state.ws.send(SetNameJson(state.name))
+                    state.ws.send(UserInfo.SetNameRequest(state.name))
                 }
             }
         }
@@ -127,10 +132,10 @@ class App : RComponent<RProps, AppState>()
                 println("CreateParty")
                 setState { lastPartyStatus = null }
                 state.ws.launch {
-                    state.ws.send(ActionType.CreateParty) { response ->
+                    state.ws.send(ActionType.PartyCreate) { response ->
                         when (response)
                         {
-                            is CreatePartyResponseJson ->
+                            is PartyRequest.CreateResponse ->
                             {
                                 setState {
                                     party = Party(
@@ -142,7 +147,7 @@ class App : RComponent<RProps, AppState>()
                                 }
                                 println("Created party with code: ${response.partyCode}")
                             }
-                            is StatusJson ->
+                            is StatusResponse ->
                             {
                                 setState {
                                     lastPartyStatus = response
@@ -157,10 +162,10 @@ class App : RComponent<RProps, AppState>()
                 println("JoinParty $value")
                 setState { lastPartyStatus = null }
                 state.ws.launch {
-                    state.ws.send(JoinPartyJson(value)) { response ->
+                    state.ws.send(PartyRequest.JoinRequest(value)) { response ->
                         when (response)
                         {
-                            is JoinPartyResponseJson ->
+                            is PartyRequest.JoinResponse ->
                             {
                                 setState {
                                     party = Party(
@@ -172,7 +177,7 @@ class App : RComponent<RProps, AppState>()
                                 }
                                 println("Joined party with ${state.party!!.users.size} users")
                             }
-                            is StatusJson ->
+                            is StatusResponse ->
                             {
                                 setState {
                                     lastPartyStatus = response
@@ -201,8 +206,8 @@ class App : RComponent<RProps, AppState>()
             attrs.users = state.party!!.users
             attrs.onSetName = { newName ->
                 state.ws.launch {
-                    state.ws.send(SetNameJson(newName)) { response ->
-                        if (response is StatusJson && response.status == StatusCode.Success)
+                    state.ws.send(UserInfo.SetNameRequest(newName)) { response ->
+                        if (response is StatusResponse && response.status == StatusCode.Success)
                         {
                             setState {
                                 name = newName
@@ -221,7 +226,7 @@ class App : RComponent<RProps, AppState>()
 //            attrs.settings = state.party!!.state.settings
 //            attrs.onSubmit = { newSettings ->
 //                state.ws.launch {
-//                    state.ws.send(SetGameSettingsJson(newSettings))
+//                    state.ws.send(WordGame.SetGameSettingsJson(newSettings))
 //                }
 //            }
 //        }
@@ -231,8 +236,8 @@ class App : RComponent<RProps, AppState>()
             attrs.onClickFunction = {
                 println("LeaveParty")
                 state.ws.launch {
-                    state.ws.send(ActionType.LeaveParty) { response ->
-                        if (response is StatusJson && response.status == StatusCode.Success)
+                    state.ws.send(ActionType.PartyLeave) { response ->
+                        if (response is StatusResponse && response.status == StatusCode.Success)
                         {
                             setState {
                                 party = null
@@ -259,7 +264,7 @@ class App : RComponent<RProps, AppState>()
                     chatHistory.add(log)
                 }
                 state.ws.launch {
-                    state.ws.send(ChatJson(message))
+                    state.ws.send(ChatRequest.MessageRequest(message))
                 }
             }
         }

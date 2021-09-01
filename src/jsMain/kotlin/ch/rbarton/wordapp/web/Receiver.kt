@@ -9,6 +9,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import react.setState
+import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun App.receiveWebsocketFrames()
 {
@@ -35,7 +36,7 @@ private fun App.onFrameReceived(rawText: String)
 
     try
     {
-        val json = Json.decodeFromString<BaseJson>(rawText)
+        val json = Json.decodeFromString<BaseRequest>(rawText)
         if (json.requestId == null)
         {
             handleUnidentifiedResponse(json)
@@ -47,7 +48,7 @@ private fun App.onFrameReceived(rawText: String)
             else
             {
                 println(
-                    "<~[server] InvalidRequestId: BaseJson.requestId = ${json.requestId} " +
+                    "<~[server] InvalidRequestId: BaseRequest.requestId = ${json.requestId} " +
                             "has no corresponding responseHandler in responseHandlerQueue.\n"
                 )
                 handleUnidentifiedResponse(json)
@@ -60,11 +61,11 @@ private fun App.onFrameReceived(rawText: String)
     }
 }
 
-fun App.handleUnidentifiedResponse(json: BaseJson)
+fun App.handleUnidentifiedResponse(json: BaseRequest)
 {
     when (json)
     {
-        is InitJson ->
+        is InitResponse ->
         {
             setState {
                 guid = json.guid
@@ -77,9 +78,9 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
                 println("\t${i++.toString().padStart(2)}. ${it.key} (${it.value})")
             }
         }
-        is StatusJson -> println("${json.status.name}${if (json.message != null) ": ${json.message}" else ""}")
-        is ActionJson -> println(json.action.name)
-        is SetNameBroadcastJson ->
+        is StatusResponse -> println("${json.status.name}${if (json.message != null) ": ${json.message}" else ""}")
+        is ActionRequest -> println(json.action.name)
+        is UserInfo.SetNameBroadcast ->
         {
             if (state.party == null) return
             val log = "[${json.userId}:${state.party!!.users[json.userId]}] Changed name to ${json.name}"
@@ -89,7 +90,7 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
                 chatHistory.add(log)
             }
         }
-        is JoinPartyBroadcastJson ->
+        is PartyRequest.JoinBroadcast ->
         {
             if (state.party == null) return
             val log = "[${json.userId}:${json.name}] Joined party"
@@ -99,7 +100,7 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
             }
             println(log)
         }
-        is LeavePartyBroadcastJson ->
+        is PartyRequest.LeaveBroadcast ->
         {
             if (state.party == null) return
             val log = "[${json.userId}:${state.party!!.users[json.userId]}] Left party"
@@ -109,7 +110,7 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
                 chatHistory.add(log)
             }
         }
-        is ChatBroadcastJson ->
+        is Chat.MessageBroadcast ->
         {
             if (state.party == null) return
             val message = "[${json.userId}:${state.party!!.users[json.userId]}]: ${json.message}"
@@ -118,7 +119,7 @@ fun App.handleUnidentifiedResponse(json: BaseJson)
             }
             println(message)
         }
-        is SetGameSettingsJson ->
+        is WordGame.SetGameSettingsRequest ->
         {
             if (state.party == null) return
             setState {

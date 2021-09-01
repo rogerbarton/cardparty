@@ -29,6 +29,7 @@ suspend fun DefaultClientWebSocketSession.outputMessages()
     }
 }
 
+@Suppress("RedundantSuspendModifier")
 private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: String)
 {
 //    println(rawText)
@@ -36,7 +37,7 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
     try
     {
         // Handle incoming messages differently depending on if they have a matching requestId
-        val json = Json.decodeFromString<BaseJson>(rawText)
+        val json = Json.decodeFromString<BaseRequest>(rawText)
         if (json.requestId == null)
         {
             handleUnidentifiedResponse(json, rawText)
@@ -46,8 +47,10 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
             if (responseHandlerQueue.contains(json.requestId))
                 responseHandlerQueue[json.requestId!!]!!.invoke(json)
             else
-                println("<~[server] InvalidRequestId: BaseJson.requestId = ${json.requestId} " +
-                        "has no corresponding responseHandler in responseHandlerQueue.\n")
+                println(
+                    "<~[server] InvalidRequestId: BaseRequest.requestId = ${json.requestId} " +
+                            "has no corresponding responseHandler in responseHandlerQueue.\n"
+                )
         }
     }
     catch (e: SerializationException)
@@ -56,11 +59,12 @@ private suspend fun DefaultClientWebSocketSession.onFrameReceived(rawText: Strin
     }
 }
 
-private fun DefaultClientWebSocketSession.handleUnidentifiedResponse(json: BaseJson, rawText: String)
+@Suppress("unused")
+private fun DefaultClientWebSocketSession.handleUnidentifiedResponse(json: BaseRequest, rawText: String)
 {
     when (json)
     {
-        is InitJson ->
+        is InitResponse ->
         {
             guid = json.guid
             println("Hi, there are ${json.userCount} people and ${json.parties.size} parties here.")
@@ -69,36 +73,36 @@ private fun DefaultClientWebSocketSession.handleUnidentifiedResponse(json: BaseJ
                 println("\t${i++.toString().padStart(2)}. ${it.key} (${it.value})")
             }
         }
-        is StatusJson -> println("${json.status.name}${if (json.message != null) ": ${json.message}" else ""}")
-        is ActionJson -> println(json.action.name)
-        is SetNameBroadcastJson ->
+        is StatusResponse -> println("${json.status.name}${if (json.message != null) ": ${json.message}" else ""}")
+        is ActionRequest -> println(json.action.name)
+        is UserInfo.SetNameBroadcast ->
         {
             println("[${json.userId}:${users!![json.userId]}] Changed name to ${json.name}")
             users!![json.userId] = json.name
         }
-        is CreatePartyResponseJson ->
+        is Party.CreateResponse ->
         {
             users = mutableMapOf(0 to name)
             partyCode = json.partyCode
             partyOptions = json.partyOptions
             println("Created party with code: ${json.partyCode}")
         }
-        is JoinPartyResponseJson ->
+        is Party.JoinResponse ->
         {
             users = json.userToNames.toMutableMap()
             println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
         }
-        is JoinPartyBroadcastJson ->
+        is Party.JoinBroadcast ->
         {
             users!![json.userId] = json.name
             println("[${json.userId}:${json.name}] Joined party")
         }
-        is LeavePartyBroadcastJson ->
+        is Party.LeaveBroadcast ->
         {
             println("[${json.userId}:${users!![json.userId]}] Left party")
             users!!.remove(json.userId)
         }
-        is ChatBroadcastJson ->
+        is Chat.MessageBroadcast ->
         {
             println("[${json.userId}:${users?.get(json.userId)}]: ${json.message}")
         }

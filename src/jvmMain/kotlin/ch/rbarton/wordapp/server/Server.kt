@@ -1,7 +1,7 @@
 package ch.rbarton.wordapp.server
 
 import ch.rbarton.wordapp.common.connection.send
-import ch.rbarton.wordapp.common.request.InitJson
+import ch.rbarton.wordapp.common.request.InitResponse
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.request.onJsonReceived
 import io.ktor.application.*
@@ -19,10 +19,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.util.*
 
-val allConnections: MutableSet<Connection> = Collections.synchronizedSet<Connection?>(LinkedHashSet())
-val parties: MutableMap<String, Party> = Collections.synchronizedMap<String, Party>(LinkedHashMap())
+val allConnections: MutableSet<Connection> = Collections.synchronizedSet(LinkedHashSet())
+val parties: MutableMap<String, Party> = Collections.synchronizedMap(LinkedHashMap())
 
-fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
+fun main(args: Array<String>) = EngineMain.main(args)
 
 @Suppress("unused")
 fun Application.module()
@@ -51,7 +51,7 @@ fun Application.module()
                 try
                 {
                     send(
-                        InitJson(
+                        InitResponse(
                             thisConnection.guid,
                             allConnections.size,
                             parties.mapValues { it.value.connections.size })

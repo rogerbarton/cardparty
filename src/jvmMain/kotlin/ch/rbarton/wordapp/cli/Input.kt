@@ -1,12 +1,13 @@
 package ch.rbarton.wordapp.cli
 
 import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.client.features.websocket.*
 
 suspend fun DefaultClientWebSocketSession.inputMessages()
 {
-    send(SetNameJson(name))
+    send(UserInfo.SetNameRequest(name))
 
     while (true)
     {
@@ -16,13 +17,13 @@ suspend fun DefaultClientWebSocketSession.inputMessages()
     }
 }
 
-suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
+suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
 {
-    val args = command.split(" ", limit = 2)
+    val (command, args) = splitFirstSpace(input)
 
     try
     {
-        when (args[0])
+        when (command)
         {
             "help" ->
             {
@@ -30,52 +31,55 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
                     """
                     setname [new name]
                     
-                    -- When not in a party:
-                    create
-                    join [party code]
+                    When not in a party:
+                      create
+                      join [party code]
                     
-                    -- When in a party:
-                    chat [message]
-                    get [attribute]
-                    leave                    
+                    When in a party:
+                      chat [message]
+                      get [attribute]
+                      leave
+                                       
+                    When in a game:
+                      addword [text]
                 """.trimIndent()
                 )
             }
             "setname" ->
             {
-                if (args.size <= 1)
+                if (args == null)
                 {
                     println("Use: setname [new name]")
                     return
                 }
 
-                name = args[1]
-                send(SetNameJson(name)) { response ->
+                name = args
+                send(UserInfo.SetNameRequest(name)) { response ->
                     when
                     {
-                        response !is StatusJson -> println("SetName: $response")
+                        response !is StatusResponse -> println("SetName: $response")
                         response.status != StatusCode.Success -> println("SetName: ${response.status}")
                         else -> println("Successfully set name")
                     }
                 }
             }
-            "create" -> send(ActionType.CreateParty)
+            "create" -> send(ActionType.PartyCreate)
             "join" ->
             {
-                if (args.size <= 1)
+                if (args == null)
                 {
                     println("Use: join [party code]")
                     return
                 }
 
-                send(JoinPartyJson(args[1])) { response ->
-                    if (response is JoinPartyResponseJson)
+                send(Party.JoinRequest(args)) { response ->
+                    if (response is Party.JoinResponse)
                     {
-                        partyCode = args[1]
+                        partyCode = args
                         users = response.userToNames.toMutableMap()
                         println("Joined party with ${users!!.size} users: ${users!!.values.joinToString(", ")}")
                     }
-                    else if (response is StatusJson)
+                    else if (response is StatusResponse)
                         println("Join Party: ${response.status}")
                     else
                         println("Error in JoinParty: $response")
@@ -83,18 +87,18 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
             }
             "chat" ->
             {
-                if (args.size <= 1)
+                if (args == null)
                 {
                     println("Use: chat [message]")
                     return
                 }
 
-                send(ChatJson(args[1]))
+                send(Chat.MessageRequest(args))
             }
             "leave" ->
             {
-                send(ActionType.LeaveParty) { response ->
-                    if (response is StatusJson && response.status == StatusCode.Success)
+                send(ActionType.PartyLeave) { response ->
+                    if (response is StatusResponse && response.status == StatusCode.Success)
                     {
                         users = null
                         puid = null
@@ -107,26 +111,59 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
             }
             "get" ->
             {
-                when (if (args.size > 1) args[1] else "")
-                {
-                    "users", "names" -> println("users: ${users?.values?.joinToString(", ")}")
-                    "party", "code" -> println("partyCode: $partyCode")
-                    else -> println(
-                        "Use: get [attribute]\n" +
-                                "  1. users | names\n" +
-                                "  2. party | code"
+                if (args == null)
+                    println(
+                        """Use: get [attribute]
+                          1. users | names
+                          2. party | code
+                        """.trimIndent()
                     )
+                else
+                    when (args)
+                    {
+                        "users", "names" -> println("users: ${users?.values?.joinToString(", ")}")
+                        "party", "code" -> println("partyCode: $partyCode")
+                        else -> println("Unknown argument: $args")
+                    }
+            }
+            "set" ->
+            {
+                if (args == null)
+                    println(
+                        """
+                        Use: set [key] [value]
+                          1. partymode
+                        """.trimIndent()
+                    )
+                else
+                {
+                    val (key, value) = splitFirstSpace(args)
+                    if (value == null)
+                        println("Must give a value.")
+                    else
+                        when (key)
+                        {
+                            "partymode" ->
+                            {
+                                val mode: PartyMode? = PartyMode.values().firstOrNull { it.ordinal == value.toInt() }
+                                if (mode == null)
+                                    println("Invalid value.")
+                                else
+                                    send(PartyOptions.SetPartyModeRequest(mode))
+                            }
+                            else -> println("Unknown key: $key")
+                        }
                 }
             }
             "addcard" ->
             {
-                if (args.size <= 1)
+                if (args == null)
                 {
                     println("Use: addcard [text]")
                     return
                 }
 
-                send(AddWordJson(args[1], "General"))
+                send(WordGame.AddWordRequest(args, "General"))
             }
             else -> println("Invalid command")
         }
@@ -136,4 +173,12 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(command: String)
         println("Error while sending: ${e.localizedMessage}")
         return
     }
+}
+
+private fun splitFirstSpace(input: String): Pair<String, String?>
+{
+    val splitInput = input.split(" ", limit = 2)
+    val command = splitInput[0]
+    val args = splitInput.getOrNull(1)
+    return Pair(command, args)
 }

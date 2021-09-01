@@ -1,11 +1,12 @@
 package ch.rbarton.wordapp.server.request
 
-import ch.rbarton.wordapp.common.request.*
+import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.Connection
 import ch.rbarton.wordapp.server.Party
 import ch.rbarton.wordapp.server.parties
 import ch.rbarton.wordapp.server.send
 import kotlin.collections.*
+import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun Connection.createParty()
 {
@@ -21,14 +22,14 @@ suspend fun Connection.createParty()
     val party = Party(partyCode!!, this)
     parties[partyCode!!] = party
 
-    send(CreatePartyResponseJson(partyCode!!, party.options))
+    send(PartyRequest.CreateResponse(partyCode!!, party.options))
 }
 
 /**
  * Contains all functions for handling requests sent by a user related to the party/admin
  */
 
-suspend fun Connection.onRequestReceived(data: JoinPartyJson)
+suspend fun Connection.onRequestReceived(data: PartyRequest.JoinRequest)
 {
     // Check if we are already in a party
     if (partyCode != null)
@@ -49,8 +50,14 @@ suspend fun Connection.onRequestReceived(data: JoinPartyJson)
     party.connections += this
     partyCode = data.partyCode
 
-    party.broadcast(this, JoinPartyBroadcastJson(guid, name))
-    send(JoinPartyResponseJson(party.connections.associateBy({ it.guid }, { it.name }), party.host.guid, party.game))
+    party.broadcast(this, PartyRequest.JoinBroadcast(guid, name))
+    send(
+        PartyRequest.JoinResponse(
+            party.connections.associateBy({ it.guid }, { it.name }),
+            party.host.guid,
+            party.game
+        )
+    )
 }
 
 suspend fun Connection.leaveParty()

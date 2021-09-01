@@ -5,6 +5,6 @@ package ch.rbarton.wordapp.common.request
  */
 enum class ActionType
 {
-    CreateParty,
-    LeaveParty,
+    PartyCreate,
+    PartyLeave,
 }
