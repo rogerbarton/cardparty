@@ -34,7 +34,7 @@ suspend fun Connection.send(status: StatusCode) = send(StatusResponse(status) as
 /**
  * Broadcast message to all other members, except the origin connection
  */
-suspend fun Collection<Connection>.broadcast(origin: Connection, payload: BaseRequest)
+suspend fun Collection<Connection>.broadcast(origin: Connection?, payload: BaseRequest)
 {
     val payloadText = Json.encodeToString(payload)
     forEach {
@@ -42,7 +42,7 @@ suspend fun Collection<Connection>.broadcast(origin: Connection, payload: BaseRe
             it.session.send(payloadText)
     }
 
-    println(">-[${origin.guid}:${origin.name}] $payloadText")
+    println(">-[${origin?.guid ?: "-"}:${origin?.name ?: "-"}] $payloadText")
 }
 
 suspend fun Collection<Connection>.broadcast(origin: Connection?, actionType: ActionType)
@@ -53,5 +53,5 @@ suspend fun Collection<Connection>.broadcast(origin: Connection?, actionType: Ac
             it.session.send(payloadText)
     }
 
-    println(">-[${origin?.guid}:${origin?.name ?: "-"}] $actionType")
+    println(">-[${origin?.guid ?: "-"}:${origin?.name ?: "-"}] $actionType")
 }

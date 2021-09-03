@@ -20,7 +20,10 @@ suspend fun Connection.onJsonReceived(json: BaseRequest)
         is Chat.MessageRequest -> onRequestReceived(json)
 
         is WordGame.SetGameSettingsRequest -> onRequestReceived(json)
+        is WordGame.SetGameStageRequest -> onRequestReceived(json)
+        is WordGame.AddCategoryRequest -> onRequestReceived(json)
         is WordGame.AddWordRequest -> onRequestReceived(json)
+
         else -> send(StatusCode.InvalidRequestType)
     }
     currentRequestId = null

@@ -10,6 +10,7 @@ enum class StatusCode(val status: Int)
     InvalidRequestType(2),
     InvalidRequest(3),
     AlreadySet(4),
+    AlreadyExists(5),
     AlreadyInAParty(12)
     {
         override fun toString() = "Already in a party"

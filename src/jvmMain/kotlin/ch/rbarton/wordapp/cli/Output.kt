@@ -1,6 +1,8 @@
 package ch.rbarton.wordapp.cli
 
 import ch.rbarton.wordapp.common.connection.responseHandlerQueue
+import ch.rbarton.wordapp.common.data.PartyMode
+import ch.rbarton.wordapp.common.data.Word
 import ch.rbarton.wordapp.common.request.*
 
 import io.ktor.client.features.websocket.*
@@ -106,6 +108,12 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
 
             party!!.mode = response.mode
             party!!.gameState = response.gameState
+
+            when (party!!.mode)
+            {
+                PartyMode.Idle -> println("Party is idle.")
+                PartyMode.WordGame -> println("Word game started.")
+            }
         }
         is Chat.MessageBroadcast ->
         {
@@ -114,12 +122,22 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         }
         is WordGame.AddWordBroadcast ->
         {
-            if (party == null) return
+            if (party == null || party!!.gameState == null) return
+
+            if (!party!!.gameState!!.words.keys.contains(response.category))
+                party!!.gameState!!.words += Pair(response.category, mutableSetOf())
+
+            party!!.gameState!!.words[response.category]!! += Word(response.value)
+
             println("${response.value} added to ${response.category}")
         }
         is WordGame.AddCategoryBroadcast ->
         {
-            if (party == null) return
+            if (party == null || party!!.gameState == null) return
+
+            if (!party!!.gameState!!.words.keys.contains(response.value))
+                party!!.gameState!!.words += Pair(response.value, mutableSetOf())
+
             println("Category ${response.value} added")
         }
         else -> println("-> Unhandled Message: $rawText")

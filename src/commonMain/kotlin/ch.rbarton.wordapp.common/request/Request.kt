@@ -61,7 +61,7 @@ class PartyOptions
     data class SetPartyModeRequest(val mode: PartyMode) : BaseRequest()
 
     @Serializable
-    data class SetPartyModeBroadcast(val mode: PartyMode, val gameState: GameState) : BaseRequest()
+    data class SetPartyModeBroadcast(val mode: PartyMode, val gameState: GameState?) : BaseRequest()
 }
 
 

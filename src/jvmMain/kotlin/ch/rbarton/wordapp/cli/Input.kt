@@ -22,7 +22,7 @@ suspend fun DefaultClientWebSocketSession.inputMessages(messageOutputRoutine: Jo
 
 suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
 {
-    val (command, args) = splitFirstSpace(input)
+    val (command, args) = splitFirst(input)
 
     try
     {
@@ -44,7 +44,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                       leave
                                        
                     When in a game:
-                      addword [text]
+                      add [key] [value]
                 """.trimIndent()
                 )
             }
@@ -118,44 +118,72 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     return
                 }
 
-                val (key, value) = splitFirstSpace(args)
+                val (key, value) = splitFirst(args)
                 if (value == null)
-                    println("Must give a value.")
-                else
-                    when (key)
-                    {
-                        "partymode" ->
-                        {
-                            val mode: PartyMode? = PartyMode.values().firstOrNull { it.ordinal == value.toInt() }
-                            if (mode == null)
-                                println("Invalid value.")
-                            else
-                                send(PartyOptions.SetPartyModeRequest(mode))
-                        }
-                        "name" ->
-                        {
-                            connection.name = value
-                            send(UserInfo.SetNameRequest(connection.name)) { response ->
-                                when
-                                {
-                                    response !is StatusResponse -> println(response)
-                                    response.status != StatusCode.Success -> println(response.status.toString())
-                                    else -> println("Successfully set name")
-                                }
-                            }
-                        }
-                        else -> println("Unknown key: $key")
-                    }
-            }
-            "addword" ->
-            {
-                if (args == null)
                 {
-                    println("Use: addword [text]")
+                    println("Must give a value.")
                     return
                 }
 
-                send(WordGame.AddWordRequest(args, "General"))
+                when (key)
+                {
+                    "partymode" ->
+                    {
+                        val mode: PartyMode? = PartyMode.values().firstOrNull { it.ordinal == value.toInt() }
+                        if (mode == null)
+                            println("Invalid value.")
+                        else
+                            send(PartyOptions.SetPartyModeRequest(mode))
+                    }
+                    "name" ->
+                    {
+                        connection.name = value
+                        send(UserInfo.SetNameRequest(connection.name)) { response ->
+                            when
+                            {
+                                response !is StatusResponse -> println(response)
+                                response.status != StatusCode.Success -> println(response.status.toString())
+                                else -> println("Successfully set name")
+                            }
+                        }
+                    }
+                    else -> println("Unknown key: $key")
+                }
+            }
+            "add" ->
+            {
+                if (args == null)
+                {
+                    println(
+                        """
+                        Use: add [key] [value]
+                          1. cat    (category)
+                          2. word
+                    """.trimMargin()
+                    )
+                    return
+                }
+
+                val (key, value) = splitFirst(args)
+                if (value == null)
+                {
+                    println("Must give a value.")
+                    return
+                }
+
+                when (key)
+                {
+                    "cat" ->
+                    {
+                        send(WordGame.AddCategoryRequest(value))
+                    }
+                    "word" ->
+                    {
+                        val (word, cat) = splitFirst(value, "--")
+                        send(WordGame.AddWordRequest(word.trim(), cat?.trim() ?: "General"))
+                    }
+                    else -> println("Unknown key: $key")
+                }
             }
             "print" ->
             {
@@ -167,7 +195,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                           1. code
                           2. users
                           3. words
-                          4. categories
+                          4. cats (categories)
                         Prints local state
                         """.trimIndent()
                     )
@@ -179,11 +207,14 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     "code" -> println(party?.code)
                     "users" -> println(party?.users)
-                    "words" -> println(party?.gameState?.interviewWords)
-                    "categories" -> println(party?.gameState?.categories)
+                    "words" -> println(party?.gameState?.words)
+                    "cats", "categories" -> println(party?.gameState?.words?.keys)
                     "partymode" -> println(party?.mode)
                     else -> println("Unknown key: $args")
                 }
+            }
+            "" ->
+            {
             }
             else -> println("Invalid command")
         }
@@ -195,9 +226,9 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
     }
 }
 
-private fun splitFirstSpace(input: String): Pair<String, String?>
+private fun splitFirst(input: String, delimiters: String = " "): Pair<String, String?>
 {
-    val splitInput = input.split(" ", limit = 2)
+    val splitInput = input.split(delimiters, limit = 2)
     val command = splitInput[0]
     val args = splitInput.getOrNull(1)
     return Pair(command, args)

@@ -21,8 +21,8 @@ class Party(
 {
     val connections: MutableSet<Connection> = mutableSetOf(host)
 
-    suspend fun broadcast(origin: Connection, message: BaseRequest) = connections.broadcast(origin, message)
-    suspend fun broadcast(origin: Connection, actionType: ActionType) = connections.broadcast(origin, actionType)
+    suspend fun broadcast(origin: Connection?, message: BaseRequest) = connections.broadcast(origin, message)
+    suspend fun broadcast(origin: Connection?, actionType: ActionType) = connections.broadcast(origin, actionType)
 
     suspend fun remove(connection: Connection)
     {

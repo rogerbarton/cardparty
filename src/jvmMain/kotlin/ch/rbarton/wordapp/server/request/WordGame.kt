@@ -22,8 +22,14 @@ suspend fun Connection.onRequestReceived(json: WordGame.AddCategoryRequest)
 {
     if (requireParty() || requireGameState()) return
 
-    party!!.gameState!!.categories += json.value
-    party!!.broadcast(this, WordGame.AddCategoryBroadcast(json.value))
+    if (party!!.gameState!!.words.keys.contains(json.value))
+    {
+        send(StatusCode.AlreadyExists)
+        return
+    }
+
+    party!!.gameState!!.words += Pair(json.value, mutableSetOf())
+    party!!.broadcast(null, WordGame.AddCategoryBroadcast(json.value))
     send(StatusCode.Success)
 }
 
@@ -31,8 +37,11 @@ suspend fun Connection.onRequestReceived(json: WordGame.AddWordRequest)
 {
     if (requireParty() || requireGameState()) return
 
-    party!!.gameState!!.interviewWords += Word(json.value)
-    party!!.broadcast(this, WordGame.AddWordBroadcast(json.value, json.category))
+    if (!party!!.gameState!!.words.keys.contains(json.category))
+        party!!.gameState!!.words += Pair(json.category, mutableSetOf())
+
+    party!!.gameState!!.words[json.category]!! += Word(json.value)
+    party!!.broadcast(null, WordGame.AddWordBroadcast(json.value, json.category))
     send(StatusCode.Success)
 }
 

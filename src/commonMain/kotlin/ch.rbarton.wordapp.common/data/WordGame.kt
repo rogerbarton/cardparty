@@ -7,16 +7,14 @@ data class Word(val value: String, val visible: Boolean = false)
 
 @Serializable
 class GameState(
-    var stage: Stage = Stage.Lobby,
+    var stage: Stage = Stage.Setup,
     var settings: GameSettings = GameSettings(),
-    val categories: MutableSet<String> = mutableSetOf("General"),
-    val interviewWords: MutableSet<Word> = mutableSetOf(),
-    val intervieweeWords: MutableSet<Word> = mutableSetOf()
+    val words: MutableMap<String, MutableSet<Word>> = mutableMapOf(Pair("General", mutableSetOf())),
 )
 {
     enum class Stage
     {
-        Lobby,
+        Setup,
         CreateWords,
         Main,
     }
