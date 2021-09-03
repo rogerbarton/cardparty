@@ -13,19 +13,19 @@ suspend fun Connection.onRequestReceived(json: PartyOptions.SetPartyModeRequest)
 {
     if (requireParty() || requireHost()) return
 
-    if (party!!.gameMode == json.mode)
+    if (party!!.mode == json.mode)
     {
         send(StatusCode.AlreadySet)
         return
     }
 
-    party!!.gameMode = json.mode
-    when (party!!.gameMode)
+    party!!.mode = json.mode
+    when (party!!.mode)
     {
         PartyMode.WordGame -> party!!.gameState = GameState()
         else -> party!!.gameState = null
     }
 
-    party!!.broadcast(this, PartyOptions.SetPartyModeBroadcast(party!!.gameMode, party!!.gameState!!))
+    party!!.broadcast(this, PartyOptions.SetPartyModeBroadcast(party!!.mode, party!!.gameState!!))
     send(StatusCode.Success)
 }

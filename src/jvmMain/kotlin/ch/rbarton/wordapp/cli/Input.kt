@@ -5,16 +5,17 @@ import ch.rbarton.wordapp.common.connection.send
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.client.features.websocket.*
+import kotlinx.coroutines.Job
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
-suspend fun DefaultClientWebSocketSession.inputMessages()
+suspend fun DefaultClientWebSocketSession.inputMessages(messageOutputRoutine: Job)
 {
     send(UserInfo.SetNameRequest(connection.name))
 
     while (true)
     {
         val command = readLine()?.trim() ?: ""
-        if (command == "exit") return
+        if (command == "exit" || messageOutputRoutine.isCompleted) return
         parseCliCommand(command)
     }
 }
@@ -31,7 +32,8 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
             {
                 println(
                     """
-                    setname [new name]
+                    print [key]
+                    set [key] [value]
                     
                     When not in a party:
                       create
@@ -39,31 +41,12 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     
                     When in a party:
                       chat [message]
-                      get [attribute]
                       leave
                                        
                     When in a game:
                       addword [text]
                 """.trimIndent()
                 )
-            }
-            "setname" ->
-            {
-                if (args == null)
-                {
-                    println("Use: setname [new name]")
-                    return
-                }
-
-                connection.name = args
-                send(UserInfo.SetNameRequest(connection.name)) { response ->
-                    when
-                    {
-                        response !is StatusResponse -> println("SetName: $response")
-                        response.status != StatusCode.Success -> println("SetName: ${response.status}")
-                        else -> println("Successfully set name")
-                    }
-                }
             }
             "create" -> send(ActionType.PartyCreate) { response ->
                 when (response)
@@ -91,11 +74,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         {
                             party = Party(response.puid, response.userToNames.toMutableMap(), args, response.options)
                             println(
-                                "Joined party with ${party!!.users.size} users: ${
-                                    party!!.users.values.joinToString(
-                                        ", "
-                                    )
-                                }"
+                                "Joined party with ${party!!.users.size} users: ${party!!.users.values.joinToString(", ")}"
                             )
                         }
                         is StatusResponse -> println("Join Party: ${response.status}")
@@ -125,23 +104,6 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         println("Error in LeaveParty: $response")
                 }
             }
-            "get" ->
-            {
-                if (args == null)
-                    println(
-                        """Use: get [attribute]
-                          1. users | names
-                          2. party | code
-                        """.trimIndent()
-                    )
-                else
-                    when (args)
-                    {
-                        "users", "names" -> println("users: ${party?.users?.values?.joinToString(", ")}")
-                        "party", "code" -> println("partyCode: ${party?.code}")
-                        else -> println("Unknown argument: $args")
-                    }
-            }
             "set" ->
             {
                 if (args == null)
@@ -149,7 +111,8 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     println(
                         """
                         Use: set [key] [value]
-                          1. partymode
+                          1. name
+                          2. partymode
                         """.trimIndent()
                     )
                     return
@@ -168,6 +131,18 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                                 println("Invalid value.")
                             else
                                 send(PartyOptions.SetPartyModeRequest(mode))
+                        }
+                        "name" ->
+                        {
+                            connection.name = value
+                            send(UserInfo.SetNameRequest(connection.name)) { response ->
+                                when
+                                {
+                                    response !is StatusResponse -> println(response)
+                                    response.status != StatusCode.Success -> println(response.status.toString())
+                                    else -> println("Successfully set name")
+                                }
+                            }
                         }
                         else -> println("Unknown key: $key")
                     }
@@ -200,20 +175,14 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
 
                 }
 
-                val (key, value) = splitFirstSpace(args)
-                if (value == null)
-                {
-                    println("Must give a value.")
-                    return
-                }
-
-                when (key)
+                when (args)
                 {
                     "code" -> println(party?.code)
                     "users" -> println(party?.users)
                     "words" -> println(party?.gameState?.interviewWords)
                     "categories" -> println(party?.gameState?.categories)
-                    else -> println("Unknown key: $key")
+                    "partymode" -> println(party?.mode)
+                    else -> println("Unknown key: $args")
                 }
             }
             else -> println("Invalid command")

@@ -36,7 +36,7 @@ fun main()
                     path = "/"
                 ) {
                     val messageOutputRoutine = launch { outputMessages() }
-                    val userInputRoutine = launch { inputMessages() }
+                    val userInputRoutine = launch { inputMessages(messageOutputRoutine) }
 
                     userInputRoutine.join() // wait for exit
                     messageOutputRoutine.cancelAndJoin()

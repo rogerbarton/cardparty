@@ -17,8 +17,16 @@ suspend fun DefaultClientWebSocketSession.outputMessages()
     {
         for (frame in incoming)
         {
-            frame as? Frame.Text ?: continue
-            onFrameReceived(frame.readText())
+            when (frame)
+            {
+                is Frame.Text -> onFrameReceived(frame.readText())
+                is Frame.Close ->
+                {
+                    println("Disconnected: ${frame.readReason()}")
+                    return
+                }
+            }
+
         }
     }
     catch (e: CancellationException)
@@ -96,7 +104,7 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         {
             if (party == null) return
 
-            party!!.gameMode = response.mode
+            party!!.mode = response.mode
             party!!.gameState = response.gameState
         }
         is Chat.MessageBroadcast ->
