@@ -1,6 +1,7 @@
 package ch.rbarton.wordapp.server
 
 import ch.rbarton.wordapp.common.request.StatusCode
+import ch.rbarton.wordapp.server.data.Party
 import io.ktor.http.cio.websocket.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -43,7 +44,7 @@ suspend fun Connection.requireHost(): Boolean
 
 suspend fun Connection.requireGameState(): Boolean
 {
-    if (party!!.gameState == null)
+    if (party!!.stateShared == null)
     {
         send(StatusCode.NotInAGame)
         return true

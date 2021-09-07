@@ -2,7 +2,7 @@ package ch.rbarton.wordapp.server.request
 
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.Connection
-import ch.rbarton.wordapp.server.Party
+import ch.rbarton.wordapp.server.data.Party
 import ch.rbarton.wordapp.server.parties
 import ch.rbarton.wordapp.server.send
 import kotlin.collections.*
@@ -57,7 +57,7 @@ suspend fun Connection.onRequestReceived(data: PartyRequest.JoinRequest)
             party.connections.associateBy({ it.guid }, { it.name }),
             party.host.guid,
             party.options,
-            party.gameState
+            party.stateShared
         )
     )
 }

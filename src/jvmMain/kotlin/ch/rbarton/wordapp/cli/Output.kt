@@ -4,7 +4,6 @@ import ch.rbarton.wordapp.common.connection.responseHandlerQueue
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.data.Word
 import ch.rbarton.wordapp.common.request.*
-
 import io.ktor.client.features.websocket.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CancellationException
@@ -26,6 +25,9 @@ suspend fun DefaultClientWebSocketSession.outputMessages()
                 {
                     println("Disconnected: ${frame.readReason()}")
                     return
+                }
+                else ->
+                {
                 }
             }
 
@@ -107,7 +109,7 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
             if (party == null) return
 
             party!!.mode = response.mode
-            party!!.gameState = response.gameState
+            party!!.stateShared = response.state
 
             when (party!!.mode)
             {
@@ -118,27 +120,42 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         is Chat.MessageBroadcast ->
         {
             if (party != null)
-                println("[${response.userId}:${party!!.users.get(response.userId)}]: ${response.message}")
+                println("[${response.userId}:${party!!.users[response.userId]}]: ${response.message}")
+        }
+        is WordGame.SetGameStageRequest ->
+        {
+            if (party == null || party!!.stateShared == null) return
+
+            party!!.stateShared!!.stage = response.stage
+            println("Game stage: ${party!!.stateShared!!.stage}")
         }
         is WordGame.AddWordBroadcast ->
         {
-            if (party == null || party!!.gameState == null) return
+            if (party == null || party!!.stateShared == null) return
 
-            if (!party!!.gameState!!.words.keys.contains(response.category))
-                party!!.gameState!!.words += Pair(response.category, mutableSetOf())
+            if (!party!!.stateShared!!.words.keys.contains(response.category))
+                party!!.stateShared!!.words += Pair(response.category, mutableSetOf())
 
-            party!!.gameState!!.words[response.category]!! += Word(response.value)
+            party!!.stateShared!!.words[response.category]!! += Word(response.value)
 
             println("${response.value} added to ${response.category}")
         }
         is WordGame.AddCategoryBroadcast ->
         {
-            if (party == null || party!!.gameState == null) return
+            if (party == null || party!!.stateShared == null) return
 
-            if (!party!!.gameState!!.words.keys.contains(response.value))
-                party!!.gameState!!.words += Pair(response.value, mutableSetOf())
+            if (!party!!.stateShared!!.words.keys.contains(response.value))
+                party!!.stateShared!!.words += Pair(response.value, mutableSetOf())
 
             println("Category ${response.value} added")
+        }
+        is WordGame.AssignWordsScatter ->
+        {
+            if (party == null || party!!.stateShared == null) return
+
+            party!!.stateClient!!.myWords = response.words
+
+            println("Assigned words:\n${party!!.stateClient!!.myWords!!.joinToString { " - $it\n" }}")
         }
         else -> println("-> Unhandled Message: $rawText")
     }

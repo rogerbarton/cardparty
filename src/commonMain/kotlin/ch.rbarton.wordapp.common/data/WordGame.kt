@@ -6,18 +6,16 @@ import kotlinx.serialization.Serializable
 data class Word(val value: String, val visible: Boolean = false)
 
 @Serializable
-class GameState(
-    var stage: Stage = Stage.Setup,
+class GameStateShared(
+    var stage: GameStage = GameStage.Setup,
     var settings: GameSettings = GameSettings(),
     val words: MutableMap<String, MutableSet<Word>> = mutableMapOf(Pair("General", mutableSetOf())),
 )
+
+enum class GameStage
 {
-    enum class Stage
-    {
-        Setup,
-        CreateWords,
-        Main,
-    }
+    Setup,
+    Playing,
 }
 
 @Serializable
@@ -25,6 +23,5 @@ data class GameSettings(
     var cardsPerPlayer: Int = 4,
     var intervieweeCount: Int = 1,
     var interviewerCount: Int = 1,
-    var interviewCategories: MutableSet<String> = mutableSetOf(),
-    var intervieweeCategories: MutableSet<String> = mutableSetOf(),
+    var playersCanEditCategories: Boolean = true,
 )

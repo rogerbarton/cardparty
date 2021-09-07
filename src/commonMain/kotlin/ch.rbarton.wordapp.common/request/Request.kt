@@ -1,8 +1,6 @@
 package ch.rbarton.wordapp.common.request
 
-import ch.rbarton.wordapp.common.data.GameSettings
-import ch.rbarton.wordapp.common.data.GameState
-import ch.rbarton.wordapp.common.data.PartyMode
+import ch.rbarton.wordapp.common.data.*
 import ch.rbarton.wordapp.common.data.PartyOptions
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
@@ -44,7 +42,7 @@ class Party
         val userToNames: Map<Int, String>,
         val host: Int,
         val options: PartyOptions,
-        val gameState: GameState?
+        val gameState: GameStateShared?
     ) : BaseRequest()
 
     @Serializable
@@ -61,7 +59,7 @@ class PartyOptions
     data class SetPartyModeRequest(val mode: PartyMode) : BaseRequest()
 
     @Serializable
-    data class SetPartyModeBroadcast(val mode: PartyMode, val gameState: GameState?) : BaseRequest()
+    data class SetPartyModeBroadcast(val mode: PartyMode, val state: GameStateShared?) : BaseRequest()
 }
 
 
@@ -91,7 +89,7 @@ class WordGame
     data class SetGameSettingsRequest(val settings: GameSettings) : BaseRequest()
 
     @Serializable
-    data class SetGameStageRequest(val stage: GameState.Stage) : BaseRequest()
+    data class SetGameStageRequest(val stage: GameStage) : BaseRequest()
 
     @Serializable
     data class AddWordRequest(val value: String, val category: String) : BaseRequest()
@@ -104,4 +102,16 @@ class WordGame
 
     @Serializable
     data class AddCategoryBroadcast(val value: String) : BaseRequest()
+
+    @Serializable
+    data class AssignWordsScatter(val words: List<Word>) : BaseRequest()
+
+    class Playing
+    {
+        @Serializable
+        data class SetActivePlayersBroadcast(val interviewer: Int, val target: Int) : BaseRequest()
+
+        @Serializable
+        data class RevealWordRequest(val word: Word, val player: Int) : BaseRequest()
+    }
 }

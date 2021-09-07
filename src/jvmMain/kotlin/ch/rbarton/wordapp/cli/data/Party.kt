@@ -1,6 +1,6 @@
 package ch.rbarton.wordapp.cli.data
 
-import ch.rbarton.wordapp.common.data.GameState
+import ch.rbarton.wordapp.common.data.GameStateShared
 import ch.rbarton.wordapp.common.data.PartyBase
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.data.PartyOptions
@@ -11,5 +11,6 @@ class Party(
     code: String,
     options: PartyOptions = PartyOptions(),
     gameMode: PartyMode = PartyMode.Idle,
-    gameState: GameState? = GameState()
-) : PartyBase(code, options, gameMode, gameState)
+    stateShared: GameStateShared? = GameStateShared(),
+    var stateClient: GameStateClient? = GameStateClient(),
+) : PartyBase(code, options, gameMode, stateShared)

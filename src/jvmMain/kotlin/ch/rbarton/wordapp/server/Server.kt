@@ -3,6 +3,7 @@ package ch.rbarton.wordapp.server
 import ch.rbarton.wordapp.common.connection.send
 import ch.rbarton.wordapp.common.request.InitResponse
 import ch.rbarton.wordapp.common.request.StatusCode
+import ch.rbarton.wordapp.server.data.Party
 import ch.rbarton.wordapp.server.request.onJsonReceived
 import io.ktor.application.*
 import io.ktor.features.*

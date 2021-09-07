@@ -1,11 +1,14 @@
-package ch.rbarton.wordapp.server
+package ch.rbarton.wordapp.server.data
 
-import ch.rbarton.wordapp.common.data.GameState
+import ch.rbarton.wordapp.common.data.GameStateShared
 import ch.rbarton.wordapp.common.data.PartyBase
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.data.PartyOptions
 import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.BaseRequest
+import ch.rbarton.wordapp.server.Connection
+import ch.rbarton.wordapp.server.broadcast
+import ch.rbarton.wordapp.server.parties
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 /**
@@ -16,8 +19,8 @@ class Party(
     code: String,
     options: PartyOptions = PartyOptions(),
     gameMode: PartyMode = PartyMode.Idle,
-    gameState: GameState? = GameState()
-) : PartyBase(code, options, gameMode, gameState)
+    stateShared: GameStateShared? = GameStateShared()
+) : PartyBase(code, options, gameMode, stateShared)
 {
     val connections: MutableSet<Connection> = mutableSetOf(host)
 

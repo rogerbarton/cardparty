@@ -1,6 +1,6 @@
 package ch.rbarton.wordapp.server.request
 
-import ch.rbarton.wordapp.common.data.GameState
+import ch.rbarton.wordapp.common.data.GameStateShared
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.request.PartyOptions
 import ch.rbarton.wordapp.common.request.StatusCode
@@ -22,10 +22,10 @@ suspend fun Connection.onRequestReceived(json: PartyOptions.SetPartyModeRequest)
     party!!.mode = json.mode
     when (party!!.mode)
     {
-        PartyMode.WordGame -> party!!.gameState = GameState()
-        else -> party!!.gameState = null
+        PartyMode.WordGame -> party!!.stateShared = GameStateShared()
+        else -> party!!.stateShared = null
     }
 
-    party!!.broadcast(this, PartyOptions.SetPartyModeBroadcast(party!!.mode, party!!.gameState))
+    party!!.broadcast(this, PartyOptions.SetPartyModeBroadcast(party!!.mode, party!!.stateShared))
     send(StatusCode.Success)
 }

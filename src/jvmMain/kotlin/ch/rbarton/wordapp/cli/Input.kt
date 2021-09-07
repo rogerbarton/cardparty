@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.cli
 
 import ch.rbarton.wordapp.cli.data.Party
 import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.data.GameStage
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.client.features.websocket.*
@@ -147,6 +148,14 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                             }
                         }
                     }
+                    "stage" ->
+                    {
+                        val mode: GameStage? = GameStage.values().firstOrNull { it.ordinal == value.toInt() }
+                        if (mode == null)
+                            println("Invalid value.")
+                        else
+                            send(WordGame.SetGameStageRequest(mode))
+                    }
                     else -> println("Unknown key: $key")
                 }
             }
@@ -158,7 +167,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         """
                         Use: add [key] [value]
                           1. cat    (category)
-                          2. word
+                          2. word [value] -- [category]
                     """.trimMargin()
                     )
                     return
@@ -207,8 +216,8 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     "code" -> println(party?.code)
                     "users" -> println(party?.users)
-                    "words" -> println(party?.gameState?.words)
-                    "cats", "categories" -> println(party?.gameState?.words?.keys)
+                    "words" -> println(party?.stateShared?.words)
+                    "cats", "categories" -> println(party?.stateShared?.words?.keys)
                     "partymode" -> println(party?.mode)
                     else -> println("Unknown key: $args")
                 }

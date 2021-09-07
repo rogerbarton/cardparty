@@ -1,7 +1,7 @@
 package ch.rbarton.wordapp.web
 
 import ch.rbarton.wordapp.common.connection.send
-import ch.rbarton.wordapp.common.data.GameState
+import ch.rbarton.wordapp.common.data.GameStateShared
 import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
@@ -26,7 +26,7 @@ data class Party(
     val code: String,
     var users: MutableMap<Int, String>,
     var host: Int,
-    var state: GameState?
+    var state: GameStateShared?
 )
 
 external interface AppState : State
@@ -142,7 +142,7 @@ class App : RComponent<RProps, AppState>()
                                         response.partyCode,
                                         mutableMapOf(state.guid!! to state.name),
                                         state.guid!!,
-                                        GameState()
+                                        GameStateShared()
                                     )
                                 }
                                 println("Created party with code: ${response.partyCode}")
