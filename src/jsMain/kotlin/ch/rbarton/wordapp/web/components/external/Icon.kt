@@ -1,4 +1,4 @@
-package ch.rbarton.wordapp.web.components
+package ch.rbarton.wordapp.web.components.external
 
 import kotlinx.css.LinearDimension
 import kotlinx.css.fontSize

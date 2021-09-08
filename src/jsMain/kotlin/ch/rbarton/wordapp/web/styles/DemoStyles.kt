@@ -1,9 +1,9 @@
-package ch.rbarton.wordapp.web
+package ch.rbarton.wordapp.web.styles
 
 import kotlinx.css.*
 import styled.StyleSheet
 
-object WelcomeStyles : StyleSheet("ch.rbarton.wordapp.web.WelcomeStyles", isStatic = true)
+object DemoStyles : StyleSheet("ch.rbarton.wordapp.web.styles.DemoStyles", isStatic = true)
 {
     val textContainer by css {
         padding(5.px)

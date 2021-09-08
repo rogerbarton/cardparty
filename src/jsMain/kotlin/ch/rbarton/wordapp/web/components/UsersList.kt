@@ -1,15 +1,16 @@
 package ch.rbarton.wordapp.web.components
 
-import kotlinx.browser.document
-import kotlinx.html.BUTTON
+import ch.rbarton.wordapp.web.components.external.icon
 import kotlinx.html.ButtonType
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onClickFunction
 import kotlinx.html.js.onSubmitFunction
 import org.w3c.dom.HTMLInputElement
-import react.*
+import react.RProps
 import react.dom.*
+import react.fc
+import react.useState
 
 external interface UsersListProps : RProps
 {

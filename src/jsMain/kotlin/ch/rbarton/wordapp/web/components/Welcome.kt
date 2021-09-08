@@ -17,6 +17,7 @@ val Welcome = fc<WelcomeProps> { props ->
     }
 
     +"Hi, there are ${props.userCount} people and ${props.partyCount} parties here."
+    // TODO: integrate md
 //    +"Hi, there are "; b { +"${props.userCount}" }; +"people and "; b { +"${props.partyCount}" }; +" parties here."
 //    reactMarkdown {
 //        attrs.children = "Hi, there are *${props.userCount}* people and **${props.partyCount}** parties here."

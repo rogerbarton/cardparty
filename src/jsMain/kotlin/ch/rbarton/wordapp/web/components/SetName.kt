@@ -1,5 +1,6 @@
 package ch.rbarton.wordapp.web.components
 
+import ch.rbarton.wordapp.web.components.external.icon
 import kotlinx.html.ButtonType
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
@@ -10,7 +11,6 @@ import react.dom.button
 import react.dom.form
 import react.dom.input
 import react.fc
-import react.functionalComponent
 import react.useState
 
 external interface SetNameProps : RProps
