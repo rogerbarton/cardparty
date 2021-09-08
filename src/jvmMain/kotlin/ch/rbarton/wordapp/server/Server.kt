@@ -15,6 +15,7 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -70,6 +71,7 @@ fun Application.module()
                 finally
                 {
                     println("Removing ${thisConnection.guid}:${thisConnection.name}")
+                    launch { thisConnection.party?.remove(thisConnection) }
                     allConnections -= thisConnection
                 }
             }
