@@ -12,7 +12,6 @@ import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.html.js.onClickFunction
@@ -41,7 +40,6 @@ external interface AppState : State
 
 class App : RComponent<RProps, AppState>()
 {
-    @DelicateCoroutinesApi
     override fun AppState.init()
     {
         connection = ConnectionData()
@@ -60,8 +58,8 @@ class App : RComponent<RProps, AppState>()
                 path = "/"
             ) {
                 println("WebSocket running...")
-                launch { receiveWebsocketFrames() }
             }
+            receiveWebsocketFrames()
         }
     }
 
