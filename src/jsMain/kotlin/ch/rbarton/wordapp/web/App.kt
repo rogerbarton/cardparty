@@ -1,7 +1,8 @@
 package ch.rbarton.wordapp.web
 
+import ch.rbarton.wordapp.common.client.data.ConnectionData
+import ch.rbarton.wordapp.common.client.data.Party
 import ch.rbarton.wordapp.common.connection.send
-import ch.rbarton.wordapp.common.data.GameStateShared
 import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
@@ -22,28 +23,17 @@ import react.dom.span
 import ch.rbarton.wordapp.common.request.Chat as ChatRequest
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
-data class Party(
-    val code: String,
-    var users: MutableMap<Int, String>,
-    var host: Int,
-    var state: GameStateShared?
-)
-
 external interface AppState : State
 {
+    var connection: ConnectionData
+    var party: Party?
+
     var globalUserCount: Int
     var globalPartyCount: Int
-
-    var guid: Int?
-    var puid: Int?
-    var name: String
-    var party: Party?
 
     var chatHistory: MutableList<String>
     var lastPartyStatus: StatusResponse?
 
-    var serverAddress: String
-    var serverPort: Int
     var httpClient: HttpClient
     var ws: WebSocketSession
 }
@@ -52,11 +42,10 @@ class App : RComponent<RProps, AppState>()
 {
     override fun AppState.init()
     {
-        chatHistory = mutableListOf()
-        name = ""
+        connection = ConnectionData()
 
-        serverAddress = "127.0.0.1"
-        serverPort = 8080
+        chatHistory = mutableListOf()
+
         httpClient = HttpClient {
             install(WebSockets)
         }
@@ -64,8 +53,8 @@ class App : RComponent<RProps, AppState>()
         GlobalScope.launch {
             ws = httpClient.webSocketSession(
                 method = HttpMethod.Get,
-                host = serverAddress,
-                port = serverPort,
+                host = connection.serverAddress,
+                port = connection.serverPort,
                 path = "/"
             ) {
                 println("WebSocket running...")
@@ -76,7 +65,7 @@ class App : RComponent<RProps, AppState>()
 
     override fun RBuilder.render()
     {
-        if (state.name.isEmpty())
+        if (state.connection.name.isEmpty())
         {
             welcome()
             setName()
@@ -112,11 +101,11 @@ class App : RComponent<RProps, AppState>()
         child(NameField) {
             attrs.onSubmit = { value ->
                 setState {
-                    name = value
+                    connection.name = value
                 }
                 state.ws.launch {
-                    println("setname: ${state.name}")
-                    state.ws.send(UserInfo.SetNameRequest(state.name))
+                    println("setname: ${state.connection.name}")
+                    state.ws.send(UserInfo.SetNameRequest(state.connection.name))
                 }
             }
         }
@@ -139,10 +128,10 @@ class App : RComponent<RProps, AppState>()
                             {
                                 setState {
                                     party = Party(
+                                        0,
+                                        mutableMapOf(0 to state.connection.name),
                                         response.partyCode,
-                                        mutableMapOf(state.guid!! to state.name),
-                                        state.guid!!,
-                                        GameStateShared()
+                                        response.partyOptions
                                     )
                                 }
                                 println("Created party with code: ${response.partyCode}")
@@ -169,10 +158,10 @@ class App : RComponent<RProps, AppState>()
                             {
                                 setState {
                                     party = Party(
-                                        value,
+                                        response.puid,
                                         response.userToNames.toMutableMap(),
-                                        response.host,
-                                        response.gameState
+                                        value,
+                                        response.options
                                     )
                                 }
                                 println("Joined party with ${state.party!!.users.size} users")
@@ -202,7 +191,7 @@ class App : RComponent<RProps, AppState>()
         }
 
         child(usersList) {
-            attrs.thisUser = state.guid!!
+            attrs.thisUser = state.connection.guid!!
             attrs.users = state.party!!.users
             attrs.onSetName = { newName ->
                 state.ws.launch {
@@ -210,8 +199,8 @@ class App : RComponent<RProps, AppState>()
                         if (response is StatusResponse && response.status == StatusCode.Success)
                         {
                             setState {
-                                name = newName
-                                party!!.users[guid!!] = newName
+                                connection.name = newName
+                                party!!.users[connection.guid!!] = newName
                             }
                         }
                         else
@@ -232,7 +221,7 @@ class App : RComponent<RProps, AppState>()
 //        }
 
         button(classes = "btn btn-secondary mb-2") {
-            +"Leave ch.rbarton.wordapp.web.Party"
+            +"Leave Party"
             attrs.onClickFunction = {
                 println("LeaveParty")
                 state.ws.launch {
@@ -258,7 +247,7 @@ class App : RComponent<RProps, AppState>()
         child(Chat) {
             attrs.chatHistory = state.chatHistory
             attrs.onSubmit = { message ->
-                val log = "[${state.guid}:${state.name}] $message"
+                val log = "[${state.connection.guid}:${state.connection.name}] $message"
                 println(log)
                 setState {
                     chatHistory.add(log)

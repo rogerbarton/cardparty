@@ -27,7 +27,7 @@ val SetParty = fc<SetPartyProps> { props ->
     val (inputText, setInputText) = useState("")
 
     button(classes = "btn btn-secondary mb-2 mx-auto d-block shadow") {
-        +"Create ch.rbarton.wordapp.web.Party"
+        +"Create Party"
         attrs.onClickFunction = props.onCreateParty
     }
 
@@ -44,7 +44,7 @@ val SetParty = fc<SetPartyProps> { props ->
             attrs.autoFocus = true
         }
         button(classes = "btn btn-primary") {
-            +"Join ch.rbarton.wordapp.web.Party"
+            +"Join Party"
         }
     }
     if (props.lastStatus != null && props.lastStatus!!.status != StatusCode.Success)

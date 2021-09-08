@@ -1,6 +1,6 @@
 package ch.rbarton.wordapp.cli
 
-import ch.rbarton.wordapp.cli.data.Party
+import ch.rbarton.wordapp.common.client.data.Party
 import ch.rbarton.wordapp.common.connection.send
 import ch.rbarton.wordapp.common.data.GameStage
 import ch.rbarton.wordapp.common.data.PartyMode

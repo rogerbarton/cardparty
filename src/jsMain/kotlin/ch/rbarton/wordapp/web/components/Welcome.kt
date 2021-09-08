@@ -1,7 +1,8 @@
 package ch.rbarton.wordapp.web.components
 
-import react.*
+import react.RProps
 import react.dom.h1
+import react.fc
 
 
 external interface WelcomeProps : RProps
@@ -12,7 +13,7 @@ external interface WelcomeProps : RProps
 
 val Welcome = fc<WelcomeProps> { props ->
     h1 {
-        +"ch.rbarton.wordapp.web.Welcome to the word game!"
+        +"Welcome to the word game!"
     }
 
     +"Hi, there are ${props.userCount} people and ${props.partyCount} parties here."

@@ -1,7 +1,7 @@
 package ch.rbarton.wordapp.cli
 
-import ch.rbarton.wordapp.cli.data.Connection
-import ch.rbarton.wordapp.cli.data.Party
+import ch.rbarton.wordapp.common.client.data.ConnectionData
+import ch.rbarton.wordapp.common.client.data.Party
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.net.ConnectException
 
-var connection = Connection()
+var connection = ConnectionData()
 var party: Party? = null
 
 fun main()

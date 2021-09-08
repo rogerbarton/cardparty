@@ -67,7 +67,7 @@ fun App.handleUnidentifiedResponse(json: BaseRequest)
         is InitResponse ->
         {
             setState {
-                guid = json.guid
+                connection.guid = json.guid
                 globalUserCount = json.userCount - 1
                 globalPartyCount = json.parties.size
             }
@@ -120,9 +120,9 @@ fun App.handleUnidentifiedResponse(json: BaseRequest)
         }
         is WordGame.SetGameSettingsRequest ->
         {
-            if (state.party == null || state.party!!.state == null) return
+            if (state.party == null || state.party!!.stateShared == null) return
             setState {
-                party!!.state!!.settings = json.settings
+                party!!.stateShared!!.settings = json.settings
             }
         }
         else -> println("-> $json")
