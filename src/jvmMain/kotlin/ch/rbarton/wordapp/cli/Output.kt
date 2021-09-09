@@ -2,7 +2,6 @@ package ch.rbarton.wordapp.cli
 
 import ch.rbarton.wordapp.common.connection.responseHandlerQueue
 import ch.rbarton.wordapp.common.data.PartyMode
-import ch.rbarton.wordapp.common.data.Word
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.cio.websocket.*
@@ -73,7 +72,7 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
     {
         is InitResponse ->
         {
-            connection.guid = response.guid
+            connection.userId = response.userId
             println("Hi, there are ${response.userCount} people and ${response.parties.size} parties here.")
             var i = 1
             response.parties.forEach {
@@ -84,31 +83,37 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         is ActionRequest -> println(response.action.name)
         is UserInfo.SetNameBroadcast ->
         {
-            if (party != null)
-            {
-                println("[${response.userGuid}:${party!!.users[response.userGuid]}] Changed name to ${response.name}")
-                party!!.users[response.userGuid] = response.name
-            }
+            if (party == null || !party!!.users.contains(response.userId)) return
+
+            println("[${response.userId}:${party!!.users[response.userId]?.name}] Changed name to ${response.name}")
+            party!!.users[response.userId]!!.name = response.name
+        }
+        is UserInfo.SetColorBroadcast ->
+        {
+            if (party == null || !party!!.users.contains(response.userId)) return
+
+            println("[${response.userId}:${party!!.users[response.userId]?.name}] Changed color to ${response.colorId}")
+            party!!.users[response.userId]!!.colorId = response.colorId
         }
         is PartyRequest.JoinBroadcast ->
         {
             if (party == null) return
 
-            party!!.users[response.userGuid] = response.name
-            println("[${response.userGuid}:${response.name}] Joined party")
+            party!!.users[response.userId] = response.userInfo
+            println("[${response.userId}:${response.userInfo.name}] Joined party")
         }
         is PartyRequest.LeaveBroadcast ->
         {
             if (party == null) return
 
             println(
-                "[${response.userGuid}:${party!!.users[response.userGuid]}] Left party" +
+                "[${response.userId}:${party!!.users[response.userId]?.name}] Left party" +
                         if (response.newHost != null) ", ${party!!.users[response.newHost]} is now host" else ""
             )
 
-            party!!.users.remove(response.userGuid)
+            party!!.users.remove(response.userId)
             if (response.newHost != null)
-                party!!.hostGuid = response.newHost
+                party!!.hostId = response.newHost
         }
         is PartyOptions.SetPartyModeBroadcast ->
         {
@@ -126,7 +131,7 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         is Chat.MessageBroadcast ->
         {
             if (party != null)
-                println("[${response.userGuid}:${party!!.users[response.userGuid]}]: ${response.message}")
+                println("[${response.userId}:${party!!.users[response.userId]?.name}]: ${response.message}")
         }
         is WordGame.SetGameStageRequest ->
         {
@@ -135,33 +140,46 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
             party!!.stateShared!!.stage = response.stage
             println("Game stage: ${party!!.stateShared!!.stage}")
         }
-        is WordGame.AddWordBroadcast ->
+        is WordGame.AddCardBroadcast ->
         {
             if (party == null || party!!.stateShared == null) return
 
-            if (!party!!.stateShared!!.words.keys.contains(response.category))
-                party!!.stateShared!!.words += Pair(response.category, mutableSetOf())
+            party!!.stateShared!!.cards[response.cardId] = response.card
 
-            party!!.stateShared!!.words[response.category]!! += Word(response.value)
+            println("${response.card.text} added to ${response.card.categoryId}")
+        }
+        is WordGame.RemoveCardRequest ->
+        {
+            if (party == null || party!!.stateShared == null || !party!!.stateShared!!.cards.contains(response.cardId)) return
 
-            println("${response.value} added to ${response.category}")
+            println("Removing card: ${party!!.stateShared!!.cards[response.cardId]!!.text}")
+            party!!.stateShared!!.cards.remove(response.cardId)
         }
         is WordGame.AddCategoryBroadcast ->
         {
             if (party == null || party!!.stateShared == null) return
 
-            if (!party!!.stateShared!!.words.keys.contains(response.value))
-                party!!.stateShared!!.words += Pair(response.value, mutableSetOf())
+            party!!.stateShared!!.categories[response.categoryId] = response.category
 
-            println("Category ${response.value} added")
+            println("Category ${response.category} added")
+        }
+        is WordGame.RemoveCategoryRequest ->
+        {
+            if (party == null || party!!.stateShared == null || !party!!.stateShared!!.categories.contains(response.categoryId)) return
+
+            println("Removing category: ${party!!.stateShared!!.categories[response.categoryId]!!.text}")
+
+            party!!.stateShared!!.categories.remove(response.categoryId)
+            party!!.stateShared!!.cards =
+                party!!.stateShared!!.cards.filter { it.value.categoryId != response.categoryId }.toMutableMap()
         }
         is WordGame.AssignWordsScatter ->
         {
             if (party == null || party!!.stateShared == null) return
 
-            party!!.stateClient!!.myWords = response.words
+            party!!.stateClient!!.myCards = response.cards
 
-            println("Assigned words:\n${party!!.stateClient!!.myWords!!.joinToString { " - $it\n" }}")
+            println("Assigned words:\n${party!!.stateClient!!.myCards!!.joinToString { " - $it\n" }}")
         }
         else -> println("-> Unhandled Message: $rawText")
     }

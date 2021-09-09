@@ -8,35 +8,31 @@ import ch.rbarton.wordapp.server.send
  * Handles the received request and sends a response
  * Multiplexer of different json types
  */
-suspend fun Connection.onJsonReceived(json: BaseRequest)
+suspend fun Connection.onJsonReceived(request: BaseRequest)
 {
-    currentRequestId = json.requestId
-    when (json)
+    currentRequestId = request.requestId
+    when (request)
     {
-        is ActionRequest -> onRequestReceived(json)
-        is UserInfo.SetNameRequest -> onRequestReceived(json)
-        is Party.JoinRequest -> onRequestReceived(json)
-        is PartyOptions.SetPartyModeRequest -> onRequestReceived(json)
-        is Chat.MessageRequest -> onRequestReceived(json)
+        is ActionRequest -> when (request.action)
+        {
+            ActionType.PartyCreate -> createParty()
+            ActionType.PartyLeave -> leaveParty()
+        }
+        is UserInfo.SetNameRequest -> onRequestReceived(request)
+        is UserInfo.SetColorRequest -> onRequestReceived(request)
+        is Party.JoinRequest -> onRequestReceived(request)
+        is PartyOptions.SetPartyModeRequest -> onRequestReceived(request)
+        is Chat.MessageRequest -> onRequestReceived(request)
 
-        is WordGame.SetGameSettingsRequest -> onRequestReceived(json)
-        is WordGame.SetGameStageRequest -> onRequestReceived(json)
-        is WordGame.AddCategoryRequest -> onRequestReceived(json)
-        is WordGame.AddWordRequest -> onRequestReceived(json)
+        is WordGame.SetGameSettingsRequest -> onRequestReceived(request)
+        is WordGame.SetGameStageRequest -> onRequestReceived(request)
+        is WordGame.AddCategoryRequest -> onRequestReceived(request)
+        is WordGame.RemoveCategoryRequest -> onRequestReceived(request)
+        is WordGame.AddCardRequest -> onRequestReceived(request)
+        is WordGame.RemoveCardRequest -> onRequestReceived(request)
 
         else -> send(StatusCode.InvalidRequestType)
     }
     currentRequestId = null
 }
 
-/**
- * Multiplexer of different actions without a backing json data class
- */
-suspend fun Connection.onRequestReceived(json: ActionRequest)
-{
-    when (json.action)
-    {
-        ActionType.PartyCreate -> createParty()
-        ActionType.PartyLeave -> leaveParty()
-    }
-}

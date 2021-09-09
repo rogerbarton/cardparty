@@ -9,17 +9,17 @@ import ch.rbarton.wordapp.server.requireHost
 import ch.rbarton.wordapp.server.requireParty
 import ch.rbarton.wordapp.server.send
 
-suspend fun Connection.onRequestReceived(json: PartyOptions.SetPartyModeRequest)
+suspend fun Connection.onRequestReceived(request: PartyOptions.SetPartyModeRequest)
 {
     if (requireParty() || requireHost()) return
 
-    if (party!!.mode == json.mode)
+    if (party!!.mode == request.mode)
     {
         send(StatusCode.AlreadySet)
         return
     }
 
-    party!!.mode = json.mode
+    party!!.mode = request.mode
     when (party!!.mode)
     {
         PartyMode.WordGame -> party!!.stateShared = GameStateShared()

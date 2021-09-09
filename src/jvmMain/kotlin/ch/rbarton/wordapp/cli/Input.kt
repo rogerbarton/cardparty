@@ -11,7 +11,7 @@ import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun DefaultClientWebSocketSession.inputMessages(messageOutputRoutine: Job)
 {
-    send(UserInfo.SetNameRequest(connection.name))
+    send(UserInfo.SetNameRequest(userInfo.name))
 
     while (true)
     {
@@ -54,7 +54,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     is PartyRequest.CreateResponse ->
                     {
-                        party = Party(mutableMapOf(0 to connection.name), response.partyCode, connection.guid!!)
+                        party = Party(mutableMapOf(0 to userInfo), response.partyCode, connection.userId!!)
                         println("Created party with code: ${response.partyCode}")
                     }
                     else -> println("Error in create party: $response")
@@ -113,7 +113,9 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         """
                         Use: set [key] [value]
                           1. name
-                          2. partymode
+                          2. color
+                          3. partymode
+                          4. stage
                         """.trimIndent()
                     )
                     return
@@ -128,6 +130,34 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
 
                 when (key)
                 {
+                    "name" ->
+                    {
+                        send(UserInfo.SetNameRequest(userInfo.name)) { response ->
+                            if (response is StatusResponse && response.status == StatusCode.Success)
+                            {
+                                userInfo.name = value
+                                println("Successfully set name")
+                            }
+                            else
+                                println(response)
+                        }
+                    }
+                    "color" ->
+                    {
+                        val colorId = value.toIntOrNull()
+                        if (colorId == null)
+                            println("Invalid value.")
+                        else
+                            send(UserInfo.SetColorRequest(colorId)) { response ->
+                                if (response is StatusResponse && response.status == StatusCode.Success)
+                                {
+                                    userInfo.colorId = colorId
+                                    println("Successfully set color")
+                                }
+                                else
+                                    println(response)
+                            }
+                    }
                     "partymode" ->
                     {
                         val mode: PartyMode? = PartyMode.values().firstOrNull { it.ordinal == value.toInt() }
@@ -135,18 +165,6 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                             println("Invalid value.")
                         else
                             send(PartyOptions.SetPartyModeRequest(mode))
-                    }
-                    "name" ->
-                    {
-                        connection.name = value
-                        send(UserInfo.SetNameRequest(connection.name)) { response ->
-                            when
-                            {
-                                response !is StatusResponse -> println(response)
-                                response.status != StatusCode.Success -> println(response.status.toString())
-                                else -> println("Successfully set name")
-                            }
-                        }
                     }
                     "stage" ->
                     {
@@ -184,12 +202,16 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     "cat" ->
                     {
-                        send(WordGame.AddCategoryRequest(value))
+                        send(WordGame.AddCategoryRequest(value, null))
                     }
                     "word" ->
                     {
                         val (word, cat) = splitFirst(value, "--")
-                        send(WordGame.AddWordRequest(word.trim(), cat?.trim() ?: "General"))
+                        val categoryId = cat?.toInt()
+                        if (categoryId == null || party?.stateShared?.categories?.contains(categoryId) == false)
+                            println("Invalid categoryId.")
+                        else
+                            send(WordGame.AddCardRequest(word.trim(), categoryId))
                     }
                     else -> println("Unknown key: $key")
                 }
@@ -216,8 +238,8 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     "code" -> println(party?.code)
                     "users" -> println(party?.users)
-                    "words" -> println(party?.stateShared?.words)
-                    "cats", "categories" -> println(party?.stateShared?.words?.keys)
+                    "words" -> println(party?.stateShared?.cards)
+                    "cats", "categories" -> println(party?.stateShared?.categories)
                     "partymode" -> println(party?.mode)
                     else -> println("Unknown key: $args")
                 }

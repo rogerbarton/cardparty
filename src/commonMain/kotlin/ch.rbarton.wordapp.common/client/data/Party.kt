@@ -1,28 +1,25 @@
 package ch.rbarton.wordapp.common.client.data
 
-import ch.rbarton.wordapp.common.data.GameStateShared
-import ch.rbarton.wordapp.common.data.PartyBase
-import ch.rbarton.wordapp.common.data.PartyMode
-import ch.rbarton.wordapp.common.data.PartyOptions
+import ch.rbarton.wordapp.common.data.*
 
 class Party(
-    var users: MutableMap<Int, String>,
+    var users: MutableMap<Int, UserInfo>,
     code: String,
-    hostGuid: Int,
+    hostId: Int,
     options: PartyOptions = PartyOptions(),
     gameMode: PartyMode = PartyMode.Idle,
-    stateShared: GameStateShared? = GameStateShared(),  // guid: name
+    stateShared: GameStateShared? = GameStateShared(),  // userId: name
     var stateClient: GameStateClient? = GameStateClient(),
-) : PartyBase(code, hostGuid, options, gameMode, stateShared)
+) : PartyBase(code, hostId, options, gameMode, stateShared)
 {
     constructor(
         partyBase: PartyBase,
-        users: MutableMap<Int, String>,
+        users: MutableMap<Int, UserInfo>,
         stateClient: GameStateClient? = GameStateClient()
     ) : this(
         users,
         partyBase.code,
-        partyBase.hostGuid,
+        partyBase.hostId,
         partyBase.options,
         partyBase.mode,
         partyBase.stateShared,

@@ -10,7 +10,7 @@ fun App.handleUnidentifiedResponse(response: BaseRequest)
         is InitResponse ->
         {
             setState {
-                connection.guid = response.guid
+                connection.userId = response.userId
                 globalUserCount = response.userCount - 1
                 globalPartyCount = response.parties.size
             }
@@ -26,19 +26,19 @@ fun App.handleUnidentifiedResponse(response: BaseRequest)
         {
             if (state.party == null) return
             val log =
-                "[${response.userGuid}:${state.party!!.users[response.userGuid]}] Changed name to ${response.name}"
+                "[${response.userId}:${state.party!!.users[response.userId]?.name}] Changed name to ${response.name}"
             println(log)
             setState {
-                party!!.users[response.userGuid] = response.name
+                party!!.users[response.userId]?.name = response.name
                 chatHistory.add(log)
             }
         }
         is Party.JoinBroadcast ->
         {
             if (state.party == null) return
-            val log = "[${response.userGuid}:${response.name}] Joined party"
+            val log = "[${response.userId}:${response.userInfo.name}] Joined party"
             setState {
-                party!!.users[response.userGuid] = response.name
+                party!!.users[response.userId] = response.userInfo
                 chatHistory.add(log)
             }
             println(log)
@@ -46,20 +46,20 @@ fun App.handleUnidentifiedResponse(response: BaseRequest)
         is Party.LeaveBroadcast ->
         {
             if (state.party == null) return
-            val log = "[${response.userGuid}:${state.party!!.users[response.userGuid]}] Left party" +
-                    if (response.newHost != null) ", ${state.party!!.users[response.newHost]} is now host" else ""
+            val log = "[${response.userId}:${state.party!!.users[response.userId]?.name}] Left party" +
+                    if (response.newHost != null) ", ${state.party!!.users[response.newHost]?.name} is now host" else ""
             println(log)
             setState {
-                party!!.users.remove(response.userGuid)
+                party!!.users.remove(response.userId)
                 if (response.newHost != null)
-                    party!!.hostGuid = response.newHost
+                    party!!.hostId = response.newHost
                 chatHistory.add(log)
             }
         }
         is Chat.MessageBroadcast ->
         {
             if (state.party == null) return
-            val message = "[${response.userGuid}:${state.party!!.users[response.userGuid]}] ${response.message}"
+            val message = "[${response.userId}:${state.party!!.users[response.userId]?.name}] ${response.message}"
             setState {
                 chatHistory.add(message)
             }

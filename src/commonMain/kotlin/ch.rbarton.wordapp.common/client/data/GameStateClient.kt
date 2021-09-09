@@ -1,7 +1,7 @@
 package ch.rbarton.wordapp.common.client.data
 
-import ch.rbarton.wordapp.common.data.Word
+import ch.rbarton.wordapp.common.data.Card
 
 data class GameStateClient(
-    var myWords: List<Word>? = null
+    var myCards: List<Card>? = null
 )

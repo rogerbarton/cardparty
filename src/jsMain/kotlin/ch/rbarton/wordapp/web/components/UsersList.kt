@@ -1,5 +1,6 @@
 package ch.rbarton.wordapp.web.components
 
+import ch.rbarton.wordapp.common.data.UserInfo
 import ch.rbarton.wordapp.web.components.external.icon
 import kotlinx.html.ButtonType
 import kotlinx.html.InputType
@@ -14,26 +15,26 @@ import react.useState
 
 external interface UsersListProps : RProps
 {
-    var thisUser: Int
-    var users: MutableMap<Int, String>
+    var thisUserId: Int
+    var users: MutableMap<Int, UserInfo>
     var host: Int
     var onSetName: (String) -> Unit
 }
 
 val usersList = fc<UsersListProps> { props ->
     val (isEditingName, setIsEditingName) = useState(false)
-    val (nameInput, setNameInput) = useState(props.users[props.thisUser]!!)
+    val (nameInput, setNameInput) = useState(props.users[props.thisUserId]!!.name)
 
-    val isNameValid = { name: String -> name.trim() != props.users[props.thisUser] && name.isNotBlank() }
+    val isNameValid = { name: String -> name.trim() != props.users[props.thisUserId]?.name && name.isNotBlank() }
 
     ul {
-        for (user in props.users)
+        for ((userId, userInfo) in props.users)
         {
             li {
-                if (user.key != props.thisUser)
+                if (userId != props.thisUserId)
                 {
-                    +"${user.key}. ${user.value}"
-                    if (user.key == props.host)
+                    +"${userId}. ${userInfo.name}"
+                    if (userId == props.host)
                         icon("star_border")
                 }
                 else
@@ -67,8 +68,8 @@ val usersList = fc<UsersListProps> { props ->
                     }
                     else
                     {
-                        +"${user.key}. ${user.value}"
-                        if (user.key == props.host)
+                        +"${userId}. ${userInfo.name}"
+                        if (userId == props.host)
                             icon("star_border")
                         button(classes = "btn btn-outline-secondary btn-sm ms-3") {
                             icon("mode_edit", size = "18px")

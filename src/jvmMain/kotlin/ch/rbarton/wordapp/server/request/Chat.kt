@@ -10,7 +10,7 @@ import ch.rbarton.wordapp.server.send
 /**
  * Chat within the party or with all not in a party
  */
-suspend fun Connection.onRequestReceived(data: Chat.MessageRequest)
+suspend fun Connection.onRequestReceived(request: Chat.MessageRequest)
 {
     if (partyCode == null)
     {
@@ -18,6 +18,6 @@ suspend fun Connection.onRequestReceived(data: Chat.MessageRequest)
         return
     }
 
-    party!!.connections.broadcast(this, Chat.MessageBroadcast(guid, data.message))
+    party!!.connections.broadcast(this, Chat.MessageBroadcast(userId, request.message))
     send(StatusCode.Success)
 }

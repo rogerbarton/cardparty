@@ -18,7 +18,7 @@ suspend fun Connection.send(payload: BaseRequest, debugOutput: String? = null)
     payload.requestId = currentRequestId
     val payloadText: String = Json.encodeToString(payload)
     session.send(payloadText)
-    println("->[${guid}:${name}] ${debugOutput ?: payloadText}")
+    println("->[${userId}:${userInfo.name}] ${debugOutput ?: payloadText}")
 }
 
 /**
@@ -42,7 +42,7 @@ suspend fun Collection<Connection>.broadcast(origin: Connection?, payload: BaseR
             it.session.send(payloadText)
     }
 
-    println(">-[${origin?.guid ?: "-"}:${origin?.name ?: "-"}] $payloadText")
+    println(">-[${origin?.userId ?: "-"}:${origin?.userInfo?.name ?: "-"}] $payloadText")
 }
 
 suspend fun Collection<Connection>.broadcast(origin: Connection?, actionType: ActionType)
@@ -53,5 +53,5 @@ suspend fun Collection<Connection>.broadcast(origin: Connection?, actionType: Ac
             it.session.send(payloadText)
     }
 
-    println(">-[${origin?.guid ?: "-"}:${origin?.name ?: "-"}] $actionType")
+    println(">-[${origin?.userId ?: "-"}:${origin?.userInfo?.name ?: "-"}] $actionType")
 }

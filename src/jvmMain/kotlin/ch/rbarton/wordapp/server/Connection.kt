@@ -1,5 +1,6 @@
 package ch.rbarton.wordapp.server
 
+import ch.rbarton.wordapp.common.data.UserInfo
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.data.Party
 import io.ktor.http.cio.websocket.*
@@ -7,10 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class Connection(val session: DefaultWebSocketSession)
 {
-    val guid = lastId.getAndIncrement()
-    var name = "user${guid}"
-    var partyCode: String? = null
+    val userId = lastId.getAndIncrement()
+    var userInfo: UserInfo = UserInfo("user${userId}")
 
+    var partyCode: String? = null
     val party: Party? get() = parties[partyCode]
 
     // Current id of request being processed, assumes that only one is handled at a time
@@ -19,6 +20,8 @@ class Connection(val session: DefaultWebSocketSession)
     companion object
     {
         var lastId = AtomicInteger(0)
+        var lastCategoryId = AtomicInteger(0)
+        var lastCardId = AtomicInteger(0)
     }
 }
 

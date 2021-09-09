@@ -3,10 +3,10 @@ package ch.rbarton.wordapp.web
 import ch.rbarton.wordapp.common.client.data.ConnectionData
 import ch.rbarton.wordapp.common.client.data.Party
 import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.data.UserInfo
 import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
-import ch.rbarton.wordapp.common.request.UserInfo
 import ch.rbarton.wordapp.web.components.Chat
 import ch.rbarton.wordapp.web.components.NameField
 import ch.rbarton.wordapp.web.components.SetParty
@@ -26,10 +26,12 @@ import react.dom.h2
 import react.dom.span
 import ch.rbarton.wordapp.common.request.Chat as ChatRequest
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
+import ch.rbarton.wordapp.common.request.UserInfo as UserInfoRequest
 
 external interface AppState : State
 {
     var connection: ConnectionData
+    var userInfo: UserInfo
     var party: Party?
 
     var globalUserCount: Int
@@ -48,6 +50,7 @@ class App : RComponent<RProps, AppState>()
     override fun AppState.init()
     {
         connection = ConnectionData()
+        userInfo = UserInfo()
 
         chatHistory = mutableListOf()
 
@@ -70,7 +73,7 @@ class App : RComponent<RProps, AppState>()
 
     override fun RBuilder.render()
     {
-        if (state.connection.name.isEmpty())
+        if (state.userInfo.name.isEmpty())
         {
             welcome()
             setName()
@@ -112,11 +115,11 @@ class App : RComponent<RProps, AppState>()
         child(NameField) {
             attrs.onSubmit = { value ->
                 setState {
-                    connection.name = value
+                    userInfo.name = value
                 }
                 state.ws.launch {
-                    println("setname: ${state.connection.name}")
-                    state.ws.send(UserInfo.SetNameRequest(state.connection.name))
+                    println("setname: ${state.userInfo.name}")
+                    state.ws.send(UserInfoRequest.SetNameRequest(state.userInfo.name))
                 }
             }
         }
@@ -139,9 +142,9 @@ class App : RComponent<RProps, AppState>()
                             {
                                 setState {
                                     party = Party(
-                                        mutableMapOf(0 to state.connection.name),
+                                        mutableMapOf(0 to state.userInfo),
                                         response.partyCode,
-                                        state.connection.guid!!
+                                        state.connection.userId!!
                                     )
                                 }
                                 println("Created party with code: ${response.partyCode}")
@@ -199,17 +202,17 @@ class App : RComponent<RProps, AppState>()
         }
 
         child(usersList) {
-            attrs.thisUser = state.connection.guid!!
+            attrs.thisUserId = state.connection.userId!!
             attrs.users = state.party!!.users
-            attrs.host = state.party!!.hostGuid
+            attrs.host = state.party!!.hostId
             attrs.onSetName = { newName ->
                 state.ws.launch {
-                    state.ws.send(UserInfo.SetNameRequest(newName)) { response ->
+                    state.ws.send(UserInfoRequest.SetNameRequest(newName)) { response ->
                         if (response is StatusResponse && response.status == StatusCode.Success)
                         {
                             setState {
-                                connection.name = newName
-                                party!!.users[connection.guid!!] = newName
+                                userInfo.name = newName
+                                party!!.users[connection.userId!!]!!.name = newName
                             }
                         }
                         else
@@ -256,7 +259,7 @@ class App : RComponent<RProps, AppState>()
         child(Chat) {
             attrs.chatHistory = state.chatHistory
             attrs.onSubmit = { message ->
-                val log = "[${state.connection.guid}:${state.connection.name}] $message"
+                val log = "[${state.connection.userId}:${state.userInfo.name}] $message"
                 println(log)
                 setState {
                     chatHistory.add(log)

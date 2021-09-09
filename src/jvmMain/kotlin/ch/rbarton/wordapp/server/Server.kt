@@ -21,8 +21,9 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.util.*
 
-val allConnections: MutableSet<Connection> = Collections.synchronizedSet(LinkedHashSet())
+val connections: MutableMap<Int, Connection> = Collections.synchronizedMap(LinkedHashMap())
 val parties: MutableMap<String, Party> = Collections.synchronizedMap(LinkedHashMap())
+val userInfos get() = connections.mapValues { it.value.userInfo }
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
@@ -48,14 +49,14 @@ fun Application.module()
 
             webSocket("/") {
                 val thisConnection = Connection(this)
-                println("Adding user ${thisConnection.guid}.")
-                allConnections += thisConnection
+                println("Adding user ${thisConnection.userId}.")
+                connections[thisConnection.userId] = thisConnection
                 try
                 {
                     send(
                         InitResponse(
-                            thisConnection.guid,
-                            allConnections.size,
+                            thisConnection.userId,
+                            connections.size,
                             parties.mapValues { it.value.connections.size })
                     )
                     for (frame in incoming)
@@ -70,9 +71,9 @@ fun Application.module()
                 }
                 finally
                 {
-                    println("Removing ${thisConnection.guid}:${thisConnection.name}")
+                    println("Removing ${thisConnection.userId}:${thisConnection.userInfo.name}")
                     launch { thisConnection.party?.remove(thisConnection) }
-                    allConnections -= thisConnection
+                    connections.remove(thisConnection.userId)
                 }
             }
         }
@@ -82,7 +83,7 @@ fun Application.module()
 
 private suspend fun onFrameReceived(rawText: String, thisConnection: Connection)
 {
-    println("<-[${thisConnection.guid}:${thisConnection.name}] $rawText")
+    println("<-[${thisConnection.userId}:${thisConnection.userInfo.name}] $rawText")
 
     try
     {
@@ -90,7 +91,7 @@ private suspend fun onFrameReceived(rawText: String, thisConnection: Connection)
     }
     catch (e: SerializationException)
     {
-        println("<~[${thisConnection.guid}:${thisConnection.name}] SerializationException: ${e.localizedMessage}\n")
+        println("<~[${thisConnection.userId}:${thisConnection.userInfo.name}] SerializationException: ${e.localizedMessage}\n")
         thisConnection.send(StatusCode.InvalidRequest)
     }
     catch (e: Exception)

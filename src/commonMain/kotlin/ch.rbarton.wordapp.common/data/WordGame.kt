@@ -3,13 +3,17 @@ package ch.rbarton.wordapp.common.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Word(val value: String, val visible: Boolean = false)
+data class Card(val text: String, val categoryId: Int, val userId: Int)
+
+@Serializable
+data class CardCategory(val text: String, val colorId: Int)
 
 @Serializable
 class GameStateShared(
     var stage: GameStage = GameStage.Setup,
     var settings: GameSettings = GameSettings(),
-    val words: MutableMap<String, MutableSet<Word>> = mutableMapOf(Pair("General", mutableSetOf())),
+    val categories: MutableMap<Int, CardCategory> = mutableMapOf(),
+    var cards: MutableMap<Int, Card> = mutableMapOf()
 )
 
 enum class GameStage

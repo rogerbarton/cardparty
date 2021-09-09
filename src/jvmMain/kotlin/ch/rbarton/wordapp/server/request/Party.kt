@@ -28,7 +28,7 @@ suspend fun Connection.createParty()
  * Contains all functions for handling requests sent by a user related to the party/admin
  */
 
-suspend fun Connection.onRequestReceived(data: PartyRequest.JoinRequest)
+suspend fun Connection.onRequestReceived(request: PartyRequest.JoinRequest)
 {
     // Check if we are already in a party
     if (partyCode != null)
@@ -38,19 +38,19 @@ suspend fun Connection.onRequestReceived(data: PartyRequest.JoinRequest)
     }
 
     // Check if the party code is valid
-    if (data.partyCode !in parties)
+    if (request.partyCode !in parties)
     {
         send(StatusCode.InvalidPartyCode)
         return
     }
 
     // Accept: add to party and notify others
-    val party = parties[data.partyCode]!!
+    val party = parties[request.partyCode]!!
     party.connections += this
-    partyCode = data.partyCode
+    partyCode = request.partyCode
 
-    party.broadcast(this, PartyRequest.JoinBroadcast(guid, name))
-    send(PartyRequest.JoinResponse(party, party.connections.associateBy({ it.guid }, { it.name })))
+    party.broadcast(this, PartyRequest.JoinBroadcast(userId, userInfo))
+    send(PartyRequest.JoinResponse(party, party.connections.associateBy({ it.userId }, { it.userInfo })))
 }
 
 suspend fun Connection.leaveParty()

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 open class PartyBase(
     val code: String,
-    var hostGuid: Int,
+    var hostId: Int,
     var options: PartyOptions = PartyOptions(),
     var mode: PartyMode = PartyMode.Idle,
     var stateShared: GameStateShared? = GameStateShared()
