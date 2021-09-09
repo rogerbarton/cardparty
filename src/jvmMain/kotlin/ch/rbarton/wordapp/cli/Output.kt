@@ -86,23 +86,29 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         {
             if (party != null)
             {
-                println("[${response.userId}:${party!!.users[response.userId]}] Changed name to ${response.name}")
-                party!!.users[response.userId] = response.name
+                println("[${response.userGuid}:${party!!.users[response.userGuid]}] Changed name to ${response.name}")
+                party!!.users[response.userGuid] = response.name
             }
         }
         is PartyRequest.JoinBroadcast ->
         {
             if (party == null) return
 
-            party!!.users[response.userId] = response.name
-            println("[${response.userId}:${response.name}] Joined party")
+            party!!.users[response.userGuid] = response.name
+            println("[${response.userGuid}:${response.name}] Joined party")
         }
         is PartyRequest.LeaveBroadcast ->
         {
             if (party == null) return
 
-            println("[${response.userId}:${party!!.users[response.userId]}] Left party")
-            party!!.users.remove(response.userId)
+            println(
+                "[${response.userGuid}:${party!!.users[response.userGuid]}] Left party" +
+                        if (response.newHost != null) ", ${party!!.users[response.newHost]} is now host" else ""
+            )
+
+            party!!.users.remove(response.userGuid)
+            if (response.newHost != null)
+                party!!.hostGuid = response.newHost
         }
         is PartyOptions.SetPartyModeBroadcast ->
         {
@@ -120,7 +126,7 @@ private fun handleUnidentifiedResponse(response: BaseRequest, rawText: String)
         is Chat.MessageBroadcast ->
         {
             if (party != null)
-                println("[${response.userId}:${party!!.users[response.userId]}]: ${response.message}")
+                println("[${response.userGuid}:${party!!.users[response.userGuid]}]: ${response.message}")
         }
         is WordGame.SetGameStageRequest ->
         {

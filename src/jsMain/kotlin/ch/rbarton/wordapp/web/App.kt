@@ -7,11 +7,15 @@ import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
 import ch.rbarton.wordapp.common.request.UserInfo
-import ch.rbarton.wordapp.web.components.*
+import ch.rbarton.wordapp.web.components.Chat
+import ch.rbarton.wordapp.web.components.NameField
+import ch.rbarton.wordapp.web.components.SetParty
+import ch.rbarton.wordapp.web.components.usersList
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.html.js.onClickFunction
@@ -40,6 +44,7 @@ external interface AppState : State
 
 class App : RComponent<RProps, AppState>()
 {
+    @DelicateCoroutinesApi
     override fun AppState.init()
     {
         connection = ConnectionData()
@@ -87,10 +92,16 @@ class App : RComponent<RProps, AppState>()
 
     private fun RBuilder.welcome()
     {
-        child(Welcome) {
-            attrs.userCount = state.globalUserCount
-            attrs.partyCount = state.globalPartyCount
+        h1 {
+            +"Welcome to the word game!"
         }
+
+        +"Hi, there are ${state.globalUserCount} people and ${state.globalPartyCount} parties here."
+        // TODO: integrate md
+//        +"Hi, there are "; b { +"${props.userCount}" }; +"people and "; b { +"${props.partyCount}" }; +" parties here."
+//        reactMarkdown {
+//            attrs.children = "Hi, there are *${props.userCount}* people and **${props.partyCount}** parties here."
+//        }
     }
 
     private fun RBuilder.setName()
@@ -128,10 +139,9 @@ class App : RComponent<RProps, AppState>()
                             {
                                 setState {
                                     party = Party(
-                                        0,
                                         mutableMapOf(0 to state.connection.name),
                                         response.partyCode,
-                                        response.partyOptions
+                                        state.connection.guid!!
                                     )
                                 }
                                 println("Created party with code: ${response.partyCode}")
@@ -158,10 +168,8 @@ class App : RComponent<RProps, AppState>()
                             {
                                 setState {
                                     party = Party(
-                                        response.puid,
-                                        response.userToNames.toMutableMap(),
-                                        value,
-                                        response.options
+                                        response.partyBase,
+                                        response.userToNames.toMutableMap()
                                     )
                                 }
                                 println("Joined party with ${state.party!!.users.size} users")
@@ -193,6 +201,7 @@ class App : RComponent<RProps, AppState>()
         child(usersList) {
             attrs.thisUser = state.connection.guid!!
             attrs.users = state.party!!.users
+            attrs.host = state.party!!.hostGuid
             attrs.onSetName = { newName ->
                 state.ws.launch {
                     state.ws.send(UserInfo.SetNameRequest(newName)) { response ->

@@ -54,7 +54,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     is PartyRequest.CreateResponse ->
                     {
-                        party = Party(0, mutableMapOf(0 to connection.name), response.partyCode, response.partyOptions)
+                        party = Party(mutableMapOf(0 to connection.name), response.partyCode, connection.guid!!)
                         println("Created party with code: ${response.partyCode}")
                     }
                     else -> println("Error in create party: $response")
@@ -73,7 +73,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     {
                         is PartyRequest.JoinResponse ->
                         {
-                            party = Party(response.puid, response.userToNames.toMutableMap(), args, response.options)
+                            party = Party(response.partyBase, response.userToNames.toMutableMap())
                             println(
                                 "Joined party with ${party!!.users.size} users: ${party!!.users.values.joinToString(", ")}"
                             )

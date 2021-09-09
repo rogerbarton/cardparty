@@ -20,7 +20,7 @@ class Party(
     options: PartyOptions = PartyOptions(),
     gameMode: PartyMode = PartyMode.Idle,
     stateShared: GameStateShared? = GameStateShared()
-) : PartyBase(code, options, gameMode, stateShared)
+) : PartyBase(code, host.guid, options, gameMode, stateShared)
 {
     val connections: MutableSet<Connection> = mutableSetOf(host)
 
@@ -39,8 +39,11 @@ class Party(
 
         val hostChanged = host == connection
         if (hostChanged)
+        {
             host = connections.random()
+            hostGuid = host.guid
+        }
 
-        broadcast(connection, PartyRequest.LeaveBroadcast(connection.guid, if (hostChanged) host.guid else null))
+        broadcast(connection, PartyRequest.LeaveBroadcast(connection.guid, if (hostChanged) hostGuid else null))
     }
 }

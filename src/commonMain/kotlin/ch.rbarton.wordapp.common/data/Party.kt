@@ -2,8 +2,10 @@ package ch.rbarton.wordapp.common.data
 
 import kotlinx.serialization.Serializable
 
-abstract class PartyBase(
+@Serializable
+open class PartyBase(
     val code: String,
+    var hostGuid: Int,
     var options: PartyOptions = PartyOptions(),
     var mode: PartyMode = PartyMode.Idle,
     var stateShared: GameStateShared? = GameStateShared()

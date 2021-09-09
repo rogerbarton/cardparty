@@ -7,9 +7,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import react.setState
-import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
+/**
+ * Handles messages as they arrive
+ */
 suspend fun App.receiveWebsocketFrames()
 {
     try
@@ -25,32 +26,36 @@ suspend fun App.receiveWebsocketFrames()
     }
     catch (e: Exception)
     {
-        println("Error while receiving: ${e.message}")
+        println("Fatal Websocket Error: ${e.message}")
     }
 }
 
+/**
+ * Deserializes frame and passes the result on.
+ * If requests have a matching id, they are handled by the function saved in the responseHandlerQueue.
+ */
 private fun App.onFrameReceived(rawText: String)
 {
 //    println(rawText)
 
     try
     {
-        val json = Json.decodeFromString<BaseRequest>(rawText)
-        if (json.requestId == null)
+        val request = Json.decodeFromString<BaseRequest>(rawText)
+        if (request.requestId == null)
         {
-            handleUnidentifiedResponse(json)
+            handleUnidentifiedResponse(request)
         }
         else
         {
-            if (responseHandlerQueue.contains(json.requestId))
-                responseHandlerQueue[json.requestId!!]!!.invoke(json)
+            if (responseHandlerQueue.contains(request.requestId))
+                responseHandlerQueue[request.requestId!!]!!.invoke(request)
             else
             {
                 println(
-                    "<~[server] InvalidRequestId: BaseRequest.requestId = ${json.requestId} " +
+                    "<~[server] InvalidRequestId: BaseRequest.requestId = ${request.requestId} " +
                             "has no corresponding responseHandler in responseHandlerQueue.\n"
                 )
-                handleUnidentifiedResponse(json)
+                handleUnidentifiedResponse(request)
             }
         }
     }
@@ -60,71 +65,3 @@ private fun App.onFrameReceived(rawText: String)
     }
 }
 
-fun App.handleUnidentifiedResponse(json: BaseRequest)
-{
-    when (json)
-    {
-        is InitResponse ->
-        {
-            setState {
-                connection.guid = json.guid
-                globalUserCount = json.userCount - 1
-                globalPartyCount = json.parties.size
-            }
-            println("Hi, there are ${json.userCount - 1} people and ${json.parties.size} parties here.")
-            var i = 1
-            json.parties.forEach {
-                println("\t${i++.toString().padStart(2)}. ${it.key} (${it.value})")
-            }
-        }
-        is StatusResponse -> println("${json.status.name}${if (json.message != null) ": ${json.message}" else ""}")
-        is ActionRequest -> println(json.action.name)
-        is UserInfo.SetNameBroadcast ->
-        {
-            if (state.party == null) return
-            val log = "[${json.userId}:${state.party!!.users[json.userId]}] Changed name to ${json.name}"
-            println(log)
-            setState {
-                party!!.users[json.userId] = json.name
-                chatHistory.add(log)
-            }
-        }
-        is PartyRequest.JoinBroadcast ->
-        {
-            if (state.party == null) return
-            val log = "[${json.userId}:${json.name}] Joined party"
-            setState {
-                party!!.users[json.userId] = json.name
-                chatHistory.add(log)
-            }
-            println(log)
-        }
-        is PartyRequest.LeaveBroadcast ->
-        {
-            if (state.party == null) return
-            val log = "[${json.userId}:${state.party!!.users[json.userId]}] Left party"
-            println(log)
-            setState {
-                party!!.users.remove(json.userId)
-                chatHistory.add(log)
-            }
-        }
-        is Chat.MessageBroadcast ->
-        {
-            if (state.party == null) return
-            val message = "[${json.userId}:${state.party!!.users[json.userId]}]: ${json.message}"
-            setState {
-                chatHistory.add(message)
-            }
-            println(message)
-        }
-        is WordGame.SetGameSettingsRequest ->
-        {
-            if (state.party == null || state.party!!.stateShared == null) return
-            setState {
-                party!!.stateShared!!.settings = json.settings
-            }
-        }
-        else -> println("-> $json")
-    }
-}

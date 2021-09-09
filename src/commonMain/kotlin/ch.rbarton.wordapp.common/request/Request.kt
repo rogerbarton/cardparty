@@ -1,7 +1,6 @@
 package ch.rbarton.wordapp.common.request
 
 import ch.rbarton.wordapp.common.data.*
-import ch.rbarton.wordapp.common.data.PartyOptions
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
@@ -31,25 +30,19 @@ data class InitResponse(val guid: Int, val userCount: Int, val parties: Map<Stri
 class Party
 {
     @Serializable
-    data class CreateResponse(val partyCode: String, val partyOptions: PartyOptions) : BaseRequest()
+    data class CreateResponse(val partyCode: String) : BaseRequest()
 
     @Serializable
     data class JoinRequest(val partyCode: String) : BaseRequest()
 
     @Serializable
-    data class JoinResponse(
-        val puid: Int,
-        val userToNames: Map<Int, String>,
-        val host: Int,
-        val options: PartyOptions,
-        val gameState: GameStateShared?
-    ) : BaseRequest()
+    data class JoinResponse(val partyBase: PartyBase, val userToNames: Map<Int, String>) : BaseRequest()
 
     @Serializable
-    data class JoinBroadcast(val userId: Int, val name: String) : BaseRequest()
+    data class JoinBroadcast(val userGuid: Int, val name: String) : BaseRequest()
 
     @Serializable
-    data class LeaveBroadcast(val userId: Int, val newHost: Int?) : BaseRequest()
+    data class LeaveBroadcast(val userGuid: Int, val newHost: Int?) : BaseRequest()
 }
 
 
@@ -69,7 +62,7 @@ class UserInfo
     data class SetNameRequest(val name: String) : BaseRequest()
 
     @Serializable
-    data class SetNameBroadcast(val userId: Int, val name: String) : BaseRequest()
+    data class SetNameBroadcast(val userGuid: Int, val name: String) : BaseRequest()
 }
 
 
@@ -79,7 +72,7 @@ class Chat
     data class MessageRequest(val message: String) : BaseRequest()
 
     @Serializable
-    data class MessageBroadcast(val userId: Int, val message: String) : BaseRequest()
+    data class MessageBroadcast(val userGuid: Int, val message: String) : BaseRequest()
 }
 
 
@@ -109,9 +102,6 @@ class WordGame
     class Playing
     {
         @Serializable
-        data class SetActivePlayersBroadcast(val interviewer: Int, val target: Int) : BaseRequest()
-
-        @Serializable
-        data class RevealWordRequest(val word: Word, val player: Int) : BaseRequest()
+        data class SetWordVisibilityRequest(val word: Word, val player: Int, val visibility: Boolean) : BaseRequest()
     }
 }

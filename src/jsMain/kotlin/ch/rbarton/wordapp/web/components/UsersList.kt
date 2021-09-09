@@ -16,6 +16,7 @@ external interface UsersListProps : RProps
 {
     var thisUser: Int
     var users: MutableMap<Int, String>
+    var host: Int
     var onSetName: (String) -> Unit
 }
 
@@ -29,8 +30,12 @@ val usersList = fc<UsersListProps> { props ->
         for (user in props.users)
         {
             li {
-                if (props.thisUser != user.key)
+                if (user.key != props.thisUser)
+                {
                     +"${user.key}. ${user.value}"
+                    if (user.key == props.host)
+                        icon("star_border")
+                }
                 else
                 {
                     if (isEditingName)
@@ -63,6 +68,8 @@ val usersList = fc<UsersListProps> { props ->
                     else
                     {
                         +"${user.key}. ${user.value}"
+                        if (user.key == props.host)
+                            icon("star_border")
                         button(classes = "btn btn-outline-secondary btn-sm ms-3") {
                             icon("mode_edit", size = "18px")
                             +"Edit"
