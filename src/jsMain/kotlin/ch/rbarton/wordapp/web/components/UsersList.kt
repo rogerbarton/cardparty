@@ -8,6 +8,7 @@ import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onClickFunction
 import kotlinx.html.js.onSubmitFunction
 import org.w3c.dom.HTMLInputElement
+import react.RBuilder
 import react.RProps
 import react.dom.*
 import react.fc
@@ -27,15 +28,13 @@ val usersList = fc<UsersListProps> { props ->
 
     val isNameValid = { name: String -> name.trim() != props.users[props.thisUserId]?.name && name.isNotBlank() }
 
-    ul {
+    ul(classes = "list-group mb-3") {
         for ((userId, userInfo) in props.users)
         {
-            li {
+            li(classes = "list-group-item") {
                 if (userId != props.thisUserId)
                 {
-                    +"${userId}. ${userInfo.name}"
-                    if (userId == props.host)
-                        icon("star_border")
+                    drawUser(userId, userInfo, props)
                 }
                 else
                 {
@@ -68,12 +67,9 @@ val usersList = fc<UsersListProps> { props ->
                     }
                     else
                     {
-                        +"${userId}. ${userInfo.name}"
-                        if (userId == props.host)
-                            icon("star_border")
-                        button(classes = "btn btn-outline-secondary btn-sm ms-3") {
-                            icon("mode_edit", size = "18px")
-                            +"Edit"
+                        drawUser(userId, userInfo, props)
+                        button(classes = "btn btn-outline-secondary btn-sm ms-2") {
+                            icon("mode_edit"); +"Edit"
                             attrs.onClickFunction = {
                                 setIsEditingName(true)
                             }
@@ -83,4 +79,16 @@ val usersList = fc<UsersListProps> { props ->
             }
         }
     }
+}
+
+private fun RBuilder.drawUser(
+    userId: Int,
+    userInfo: UserInfo,
+    props: UsersListProps
+)
+{
+    span(classes = "badge bg-secondary me-2") { +userId.toString() }
+    +userInfo.name
+    if (userId == props.host)
+        icon("star_border")
 }

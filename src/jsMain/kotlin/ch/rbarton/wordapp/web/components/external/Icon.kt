@@ -15,11 +15,11 @@ import styled.styledSpan
  * - Size: md-18, md-24 (*), md-36, md-48
  * - Tint: md-dark, md-light, md-inactive
  */
-fun RBuilder.icon(name: String, classes: String = "", size: String = "18px")
+fun RBuilder.icon(name: String, classes: String = "align-text-bottom mx-1", size: String = "18px")
 {
     styledSpan {
-        attrs.classes = mutableSetOf("material-icons $classes", "align-top me-1")
-        if(size.isNotEmpty())
+        attrs.classes = setOf("material-icons", classes)
+        if (size.isNotEmpty())
         {
             css {
                 fontSize = LinearDimension(size)

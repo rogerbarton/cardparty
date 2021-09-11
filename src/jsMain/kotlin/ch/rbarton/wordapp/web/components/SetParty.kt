@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.web.components
 
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
+import ch.rbarton.wordapp.web.components.external.icon
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onClickFunction
@@ -27,7 +28,7 @@ val SetParty = fc<SetPartyProps> { props ->
     val (inputText, setInputText) = useState("")
 
     button(classes = "btn btn-secondary mb-2 mx-auto d-block shadow") {
-        +"Create Party"
+        icon("group_add"); +"Create Party"
         attrs.onClickFunction = props.onCreateParty
     }
 
@@ -44,7 +45,7 @@ val SetParty = fc<SetPartyProps> { props ->
             attrs.autoFocus = true
         }
         button(classes = "btn btn-primary") {
-            +"Join Party"
+            icon("play_arrow"); +"Join Party"
         }
     }
     if (props.lastStatus != null && props.lastStatus!!.status != StatusCode.Success)
