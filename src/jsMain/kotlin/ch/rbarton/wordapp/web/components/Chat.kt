@@ -1,7 +1,9 @@
 package ch.rbarton.wordapp.web.components
 
+import ch.rbarton.wordapp.web.components.external.icon
 import kotlinx.css.*
 import kotlinx.html.InputType
+import kotlinx.html.classes
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onSubmitFunction
 import org.w3c.dom.HTMLInputElement
@@ -11,12 +13,36 @@ import react.fc
 import react.useState
 import styled.css
 import styled.styledDiv
+import styled.styledLi
+
+data class ChatItem(val message: String, val type: MessageType = MessageType.Status)
+
+fun MutableList<ChatItem>.add(message: String, type: MessageType = MessageType.Status) = add(ChatItem(message, type))
+fun MutableList<ChatItem>.add(message: String) = add(ChatItem(message))
+
+enum class MessageType
+{
+    Chat
+    {
+        override fun toColor() = "azure"
+    },
+    Status
+    {
+        override fun toColor() = "lightgray"
+    },
+    Debug
+    {
+        override fun toColor() = "cornsilk"
+    };
+
+    abstract fun toColor(): String
+}
 
 external interface ChatProps : RProps
 {
     var onSubmit: (String) -> Unit
 
-    var chatHistory: MutableList<String>
+    var chatHistory: MutableList<ChatItem>
 }
 
 val Chat = fc<ChatProps> { props ->
@@ -34,11 +60,13 @@ val Chat = fc<ChatProps> { props ->
             flexDirection = FlexDirection.columnReverse
         }
 
-        ul (classes = "list-group"){
+        ul(classes = "list-group") {
             for (item in props.chatHistory)
             {
-                li(classes = "list-group-item") {
-                    +item
+                styledLi {
+                    attrs.classes = setOf("list-group-item")
+                    css { backgroundColor = Color(item.type.toColor()) }
+                    +item.message
                 }
             }
         }
@@ -60,7 +88,8 @@ val Chat = fc<ChatProps> { props ->
             attrs.value = inputText
         }
         button(classes = "btn btn-secondary") {
-            +"Send"
+            icon("play_arrow"); +"Send"
+            attrs.disabled = inputText.isBlank()
         }
     }
 }

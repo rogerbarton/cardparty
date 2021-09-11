@@ -2,16 +2,15 @@ package ch.rbarton.wordapp.web
 
 import ch.rbarton.wordapp.common.client.data.ConnectionData
 import ch.rbarton.wordapp.common.client.data.Party
-import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.connection.launchSend
 import ch.rbarton.wordapp.common.data.GameStage
 import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.data.UserInfo
-import ch.rbarton.wordapp.common.request.ActionType
-import ch.rbarton.wordapp.common.request.PartyOptions
-import ch.rbarton.wordapp.common.request.StatusCode
-import ch.rbarton.wordapp.common.request.StatusResponse
+import ch.rbarton.wordapp.common.request.*
 import ch.rbarton.wordapp.web.components.*
 import ch.rbarton.wordapp.web.components.external.icon
+import ch.rbarton.wordapp.web.components.wordgame.AddCategory
+import ch.rbarton.wordapp.web.components.wordgame.CardList
 import ch.rbarton.wordapp.web.receive.onBaseRequestReceived
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
@@ -41,7 +40,7 @@ external interface AppState : State
     var globalUserCount: Int
     var globalPartyCount: Int
 
-    var chatHistory: MutableList<String>
+    var chatHistory: MutableList<ChatItem>
     var lastPartyStatus: StatusResponse?
 
     var httpClient: HttpClient
@@ -116,11 +115,17 @@ class App : RComponent<RProps, AppState>()
             {
                 PartyMode.Idle -> renderPartyIdle()
                 PartyMode.WordGame ->
+                {
+                    h1(classes = "mt-2") {
+                        +"Word Game"
+                        renderPartyCode()
+                    }
                     when (state.party!!.stateShared!!.stage)
                     {
                         GameStage.Setup -> renderWordGameSetup()
                         GameStage.Playing -> renderWordGamePlaying()
                     }
+                }
             }
             renderChat()
         }
@@ -174,13 +179,13 @@ class App : RComponent<RProps, AppState>()
             +"Choose a Name"
         }
         child(NameField) {
-            attrs.onSubmit = { value ->
-                setState {
-                    userInfo.name = value
-                }
-                state.ws!!.launch {
-                    println("setname: ${state.userInfo.name}")
-                    state.ws!!.send(UserInfoRequest.SetNameRequest(state.userInfo.name))
+            attrs.onSubmit = { newName ->
+                println("setname: $newName")
+                state.ws!!.launchSend(UserInfoRequest.SetNameRequest(newName)) { response ->
+                    if (response is StatusResponse && response.status == StatusCode.Success)
+                        setState { userInfo.name = newName }
+                    else
+                        onBaseRequestReceived(response)
                 }
             }
         }
@@ -195,56 +200,52 @@ class App : RComponent<RProps, AppState>()
             attrs.onCreateParty = {
                 println("CreateParty")
                 setState { lastPartyStatus = null }
-                state.ws!!.launch {
-                    state.ws!!.send(ActionType.PartyCreate) { response ->
-                        when (response)
+                state.ws!!.launchSend(ActionType.PartyCreate) { response ->
+                    when (response)
+                    {
+                        is PartyRequest.CreateResponse ->
                         {
-                            is PartyRequest.CreateResponse ->
-                            {
-                                setState {
-                                    party = Party(
-                                        mutableMapOf(0 to state.userInfo),
-                                        response.partyCode,
-                                        state.connection.userId!!
-                                    )
-                                }
-                                println("Created party with code: ${response.partyCode}")
+                            setState {
+                                party = Party(
+                                    mutableMapOf(0 to state.userInfo),
+                                    response.partyCode,
+                                    state.connection.userId!!
+                                )
                             }
-                            is StatusResponse ->
-                            {
-                                setState {
-                                    lastPartyStatus = response
-                                }
-                            }
-                            else -> onBaseRequestReceived(response)
+                            println("Created party with code: ${response.partyCode}")
                         }
+                        is StatusResponse ->
+                        {
+                            setState {
+                                lastPartyStatus = response
+                            }
+                        }
+                        else -> onBaseRequestReceived(response)
                     }
                 }
             }
             attrs.onJoinParty = { value ->
                 println("JoinParty $value")
                 setState { lastPartyStatus = null }
-                state.ws!!.launch {
-                    state.ws!!.send(PartyRequest.JoinRequest(value)) { response ->
-                        when (response)
+                state.ws!!.launchSend(PartyRequest.JoinRequest(value)) { response ->
+                    when (response)
+                    {
+                        is PartyRequest.JoinResponse ->
                         {
-                            is PartyRequest.JoinResponse ->
-                            {
-                                setState {
-                                    party = Party(response.partyBase, response.userToNames.toMutableMap())
-                                    if (response.newColorId != null)
-                                        userInfo.colorId = response.newColorId
-                                }
-                                println("Joined party with ${state.party!!.users.size} users")
+                            setState {
+                                party = Party(response.partyBase, response.userToNames.toMutableMap())
+                                if (response.newColorId != null)
+                                    userInfo.colorId = response.newColorId
                             }
-                            is StatusResponse ->
-                            {
-                                setState {
-                                    lastPartyStatus = response
-                                }
-                            }
-                            else -> onBaseRequestReceived(response)
+                            println("Joined party with ${state.party!!.users.size} users")
                         }
+                        is StatusResponse ->
+                        {
+                            setState {
+                                lastPartyStatus = response
+                            }
+                        }
+                        else -> onBaseRequestReceived(response)
                     }
                 }
             }
@@ -269,9 +270,7 @@ class App : RComponent<RProps, AppState>()
                             +"Play"
                             attrs.disabled = state.party!!.hostId != state.connection.userId
                             attrs.onClickFunction = {
-                                state.ws!!.launch {
-                                    state.ws!!.send(PartyOptions.SetPartyModeRequest(PartyMode.WordGame))
-                                }
+                                state.ws!!.launchSend(PartyOptions.SetPartyModeRequest(PartyMode.WordGame))
                             }
                         }
                     }
@@ -284,11 +283,6 @@ class App : RComponent<RProps, AppState>()
 
     private fun RBuilder.renderWordGameSetup()
     {
-        h1(classes = "mt-2") {
-            +"Word Game"
-            renderPartyCode()
-        }
-
         renderUsersList()
 
 //        child(components.GameSettings::class) {
@@ -300,6 +294,28 @@ class App : RComponent<RProps, AppState>()
 //                }
 //            }
 //        }
+
+        for ((categoryId, category) in state.party!!.stateShared!!.categories)
+        {
+            child(CardList) {
+                attrs.category = category
+                attrs.cards = state.party!!.stateShared!!.cards.filter { it.value.categoryId == categoryId }
+                attrs.onRemoveCard = { cardId ->
+                    state.ws!!.launchSend(WordGame.RemoveCardRequest(cardId))
+                }
+            }
+        }
+
+        child(AddCategory) {
+            attrs.onAddCategory = { category ->
+                state.ws!!.launchSend(WordGame.AddCategoryRequest(category))
+            }
+        }
+    }
+
+    private fun RBuilder.renderWordGamePlaying()
+    {
+
     }
 
     private fun RBuilder.renderPartyCode()
@@ -318,19 +334,17 @@ class App : RComponent<RProps, AppState>()
             icon("logout"); +"Leave"
             attrs.onClickFunction = {
                 println("LeaveParty")
-                state.ws!!.launch {
-                    state.ws!!.send(ActionType.PartyLeave) { response ->
-                        if (response is StatusResponse && response.status == StatusCode.Success)
-                        {
-                            setState {
-                                party = null
-                                lastPartyStatus = null
-                                chatHistory.clear()
-                            }
+                state.ws!!.launchSend(ActionType.PartyLeave) { response ->
+                    if (response is StatusResponse && response.status == StatusCode.Success)
+                    {
+                        setState {
+                            party = null
+                            lastPartyStatus = null
+                            chatHistory.clear()
                         }
-                        else
-                            onBaseRequestReceived(response)
                     }
+                    else
+                        onBaseRequestReceived(response)
                 }
             }
         }
@@ -344,26 +358,19 @@ class App : RComponent<RProps, AppState>()
             attrs.users = state.party!!.users
             attrs.host = state.party!!.hostId
             attrs.onSetName = { newName ->
-                state.ws!!.launch {
-                    state.ws!!.send(UserInfoRequest.SetNameRequest(newName)) { response ->
-                        if (response is StatusResponse && response.status == StatusCode.Success)
-                        {
-                            setState {
-                                userInfo.name = newName
-                                party!!.users[connection.userId!!]!!.name = newName
-                            }
+                state.ws!!.launchSend(UserInfoRequest.SetNameRequest(newName)) { response ->
+                    if (response is StatusResponse && response.status == StatusCode.Success)
+                    {
+                        setState {
+                            userInfo.name = newName
+                            party!!.users[connection.userId!!]!!.name = newName
                         }
-                        else
-                            onBaseRequestReceived(response)
                     }
+                    else
+                        onBaseRequestReceived(response)
                 }
             }
         }
-    }
-
-    private fun RBuilder.renderWordGamePlaying()
-    {
-
     }
 
     private fun RBuilder.renderChat()
@@ -374,11 +381,9 @@ class App : RComponent<RProps, AppState>()
                 val log = "[${state.connection.userId}:${state.userInfo.name}] $message"
                 println(log)
                 setState {
-                    chatHistory.add(log)
+                    chatHistory.add(log, MessageType.Chat)
                 }
-                state.ws!!.launch {
-                    state.ws!!.send(ChatRequest.MessageRequest(message))
-                }
+                state.ws!!.launchSend(ChatRequest.MessageRequest(message))
             }
         }
     }

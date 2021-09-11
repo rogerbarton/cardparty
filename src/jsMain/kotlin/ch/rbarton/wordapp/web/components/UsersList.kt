@@ -38,13 +38,16 @@ val usersList = fc<UsersListProps> { props ->
         for ((userId, userInfo) in props.users)
         {
             li(classes = "list-group-item") {
-                if (userId != props.thisUserId)
-                {
-                    drawUser(userId, userInfo, props)
-                }
-                else
-                {
-                    if (isEditingName)
+                drawUser(userId, userInfo, props)
+                if (userId == props.thisUserId)
+                    if (!isEditingName)
+                    {
+                        button(classes = "btn btn-outline-secondary btn-sm float-end ms-2") {
+                            icon("mode_edit"); +"Edit"
+                            attrs.onClickFunction = { setIsEditingName(true) }
+                        }
+                    }
+                    else
                     {
                         form(classes = "input-group") {
                             attrs.onSubmitFunction = {
@@ -54,10 +57,9 @@ val usersList = fc<UsersListProps> { props ->
                                 setIsEditingName(false)
                             }
                             input(type = InputType.text, classes = "form-control") {
-                                attrs.onChangeFunction = {
-                                    setNameInput((it.target as HTMLInputElement).value)
-                                }
+                                attrs.onChangeFunction = { setNameInput((it.target as HTMLInputElement).value) }
                                 attrs.autoFocus = true
+                                attrs.placeholder = "Name"
                             }
                             button(type = ButtonType.submit, classes = "btn btn-primary btn-sm") {
                                 if (isNameValid(nameInput))
@@ -71,17 +73,6 @@ val usersList = fc<UsersListProps> { props ->
                             }
                         }
                     }
-                    else
-                    {
-                        drawUser(userId, userInfo, props)
-                        button(classes = "btn btn-outline-secondary btn-sm ms-2") {
-                            icon("mode_edit"); +"Edit"
-                            attrs.onClickFunction = {
-                                setIsEditingName(true)
-                            }
-                        }
-                    }
-                }
             }
         }
     }

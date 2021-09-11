@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.common.connection
 
 import ch.rbarton.wordapp.common.request.*
 import io.ktor.http.cio.websocket.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -36,3 +37,12 @@ suspend fun WebSocketSession.send(payload: BaseRequest, onResponse: (BaseRequest
 
 suspend fun WebSocketSession.send(actionType: ActionType, onResponse: (BaseRequest) -> Unit) =
     send(ActionRequest(actionType), onResponse)
+
+fun WebSocketSession.launchSend(payload: BaseRequest) = launch { send(payload) }
+fun WebSocketSession.launchSend(actionType: ActionType) = launch { send(actionType) }
+fun WebSocketSession.launchSend(status: StatusCode) = launch { send(status) }
+fun WebSocketSession.launchSend(payload: BaseRequest, onResponse: (BaseRequest) -> Unit) =
+    launch { send(payload, onResponse) }
+
+fun WebSocketSession.launchSend(actionType: ActionType, onResponse: (BaseRequest) -> Unit) =
+    launch { send(actionType, onResponse) }

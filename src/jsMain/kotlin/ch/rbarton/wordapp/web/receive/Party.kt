@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.web.receive
 
 import ch.rbarton.wordapp.common.request.Party
 import ch.rbarton.wordapp.web.App
+import ch.rbarton.wordapp.web.components.add
 import react.setState
 
 fun App.onRequestReceived(response: Party.LeaveBroadcast)

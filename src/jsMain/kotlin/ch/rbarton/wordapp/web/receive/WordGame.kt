@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.web.receive
 
 import ch.rbarton.wordapp.common.request.WordGame
 import ch.rbarton.wordapp.web.App
+import ch.rbarton.wordapp.web.components.add
 import react.setState
 
 fun App.onRequestReceived(response: WordGame.SetGameStageRequest)
