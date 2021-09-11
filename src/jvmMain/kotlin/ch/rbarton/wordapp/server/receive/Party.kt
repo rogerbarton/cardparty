@@ -1,11 +1,14 @@
 package ch.rbarton.wordapp.server.receive
 
+import ch.rbarton.wordapp.common.data.colors
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.Connection
 import ch.rbarton.wordapp.server.data.Party
 import ch.rbarton.wordapp.server.parties
 import ch.rbarton.wordapp.server.send
 import kotlin.collections.*
+import kotlin.random.Random
+import kotlin.random.nextInt
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun Connection.createParty()
@@ -40,17 +43,33 @@ suspend fun Connection.onRequestReceived(request: PartyRequest.JoinRequest)
     // Check if the party code is valid
     if (request.partyCode !in parties)
     {
-        send(StatusCode.InvalidPartyCode)
+        send(StatusCode.InvalidValue)
         return
     }
 
     // Accept: add to party and notify others
     val party = parties[request.partyCode]!!
+    var colorChanged = false
+    if (party.connections.map { it.userInfo.colorId }.contains(userInfo.colorId))
+    {
+        // Assign unique color
+        val unusedColors = (0..colors.size).toMutableList()
+        unusedColors.removeAll(party.connections.map { it.userInfo.colorId })
+        userInfo.colorId = unusedColors.shuffled().getOrElse(0) { Random.nextInt(IntRange(0, colors.size - 1)) }
+        colorChanged = true
+    }
+
     party.connections += this
     partyCode = request.partyCode
 
     party.broadcast(this, PartyRequest.JoinBroadcast(userId, userInfo))
-    send(PartyRequest.JoinResponse(party, party.connections.associateBy({ it.userId }, { it.userInfo })))
+    send(
+        PartyRequest.JoinResponse(
+            party,
+            party.connections.associateBy({ it.userId }, { it.userInfo }),
+            if (colorChanged) userInfo.colorId else null
+        )
+    )
 }
 
 suspend fun Connection.leaveParty()

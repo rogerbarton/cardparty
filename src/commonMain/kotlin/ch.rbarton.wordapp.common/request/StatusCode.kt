@@ -19,9 +19,9 @@ enum class StatusCode(val status: Int)
     {
         override fun toString() = "Not in a party"
     },
-    InvalidPartyCode(14)
+    InvalidValue(14)
     {
-        override fun toString() = "Invalid party code"
+        override fun toString() = "Invalid value"
     },
     NotHost(15)
     {

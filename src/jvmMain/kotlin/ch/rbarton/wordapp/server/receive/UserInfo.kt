@@ -1,5 +1,6 @@
 package ch.rbarton.wordapp.server.receive
 
+import ch.rbarton.wordapp.common.data.colors
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.UserInfo
 import ch.rbarton.wordapp.server.Connection
@@ -15,6 +16,12 @@ suspend fun Connection.onRequestReceived(request: UserInfo.SetNameRequest)
 
 suspend fun Connection.onRequestReceived(request: UserInfo.SetColorRequest)
 {
+    if (request.colorId < 0 || request.colorId >= colors.size)
+    {
+        send(StatusCode.InvalidValue)
+        return
+    }
+
     if (party != null)
         for (userId in party!!.connections.map { it.userId })
             if (userInfos[userId]?.colorId == request.colorId)

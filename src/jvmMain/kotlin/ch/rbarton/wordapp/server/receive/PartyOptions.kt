@@ -26,6 +26,6 @@ suspend fun Connection.onRequestReceived(request: PartyOptions.SetPartyModeReque
         else -> party!!.stateShared = null
     }
 
-    party!!.broadcast(this, PartyOptions.SetPartyModeBroadcast(party!!.mode, party!!.stateShared))
+    party!!.broadcast(null, PartyOptions.SetPartyModeBroadcast(party!!.mode, party!!.stateShared))
     send(StatusCode.Success)
 }

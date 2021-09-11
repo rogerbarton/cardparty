@@ -75,6 +75,8 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         is PartyRequest.JoinResponse ->
                         {
                             party = Party(response.partyBase, response.userToNames.toMutableMap())
+                            if (response.newColorId != null)
+                                userInfo.colorId = response.newColorId
                             println(
                                 "Joined party with ${party!!.users.size} users: ${party!!.users.values.joinToString(", ")}"
                             )

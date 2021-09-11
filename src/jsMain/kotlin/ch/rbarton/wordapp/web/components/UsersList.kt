@@ -1,9 +1,13 @@
 package ch.rbarton.wordapp.web.components
 
 import ch.rbarton.wordapp.common.data.UserInfo
+import ch.rbarton.wordapp.common.data.colors
 import ch.rbarton.wordapp.web.components.external.icon
+import kotlinx.css.Color
+import kotlinx.css.backgroundColor
 import kotlinx.html.ButtonType
 import kotlinx.html.InputType
+import kotlinx.html.classes
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onClickFunction
 import kotlinx.html.js.onSubmitFunction
@@ -13,6 +17,8 @@ import react.RProps
 import react.dom.*
 import react.fc
 import react.useState
+import styled.css
+import styled.styledSpan
 
 external interface UsersListProps : RProps
 {
@@ -87,7 +93,11 @@ private fun RBuilder.drawUser(
     props: UsersListProps
 )
 {
-    span(classes = "badge bg-secondary me-2") { +userId.toString() }
+    styledSpan {
+        attrs.classes = setOf("badge me-2")
+        css { backgroundColor = Color(colors.getOrNull(userInfo.colorId) ?: "#000000") }
+        +userId.toString()
+    }
     +userInfo.name
     if (userId == props.host)
         icon("star_border")

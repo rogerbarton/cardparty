@@ -5,8 +5,10 @@ import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onSubmitFunction
 import org.w3c.dom.HTMLInputElement
-import react.*
+import react.RProps
 import react.dom.*
+import react.fc
+import react.useState
 import styled.css
 import styled.styledDiv
 
@@ -20,14 +22,14 @@ external interface ChatProps : RProps
 val Chat = fc<ChatProps> { props ->
     val (inputText, setInputText) = useState("")
 
-    h2 {
+    h2(classes = "mt-2") {
         +"Chat"
     }
 
     styledDiv {
         css {
             maxHeight = LinearDimension("300px")
-            overflow = Overflow.scroll
+            overflowY = Overflow.scroll
             display = Display.flex
             flexDirection = FlexDirection.columnReverse
         }

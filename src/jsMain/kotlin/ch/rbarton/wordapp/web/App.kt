@@ -3,8 +3,11 @@ package ch.rbarton.wordapp.web
 import ch.rbarton.wordapp.common.client.data.ConnectionData
 import ch.rbarton.wordapp.common.client.data.Party
 import ch.rbarton.wordapp.common.connection.send
+import ch.rbarton.wordapp.common.data.GameStage
+import ch.rbarton.wordapp.common.data.PartyMode
 import ch.rbarton.wordapp.common.data.UserInfo
 import ch.rbarton.wordapp.common.request.ActionType
+import ch.rbarton.wordapp.common.request.PartyOptions
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
 import ch.rbarton.wordapp.web.components.*
@@ -109,10 +112,18 @@ class App : RComponent<RProps, AppState>()
         }
         else
         {
-            renderInParty()
+            when (state.party!!.mode)
+            {
+                PartyMode.Idle -> renderPartyIdle()
+                PartyMode.WordGame ->
+                    when (state.party!!.stateShared!!.stage)
+                    {
+                        GameStage.Setup -> renderWordGameSetup()
+                        GameStage.Playing -> renderWordGamePlaying()
+                    }
+            }
             renderChat()
         }
-
     }
 
     private fun RBuilder.renderConnecting()
@@ -220,10 +231,9 @@ class App : RComponent<RProps, AppState>()
                             is PartyRequest.JoinResponse ->
                             {
                                 setState {
-                                    party = Party(
-                                        response.partyBase,
-                                        response.userToNames.toMutableMap()
-                                    )
+                                    party = Party(response.partyBase, response.userToNames.toMutableMap())
+                                    if (response.newColorId != null)
+                                        userInfo.colorId = response.newColorId
                                 }
                                 println("Joined party with ${state.party!!.users.size} users")
                             }
@@ -241,13 +251,61 @@ class App : RComponent<RProps, AppState>()
         }
     }
 
-    private fun RBuilder.renderInParty()
+    private fun RBuilder.renderPartyIdle()
     {
-        h1 {
-            +"Word Game Lobby"
+        h1(classes = "mt-2") {
+            +"Yolo"
+            renderPartyCode()
         }
+
+        strong { +"Select a game mode" }
+        div(classes = "row mb-2") {
+            div(classes = "col-sm-6") {
+                div(classes = "card") {
+                    div(classes = "card-body") {
+                        h5(classes = "card-title") { +"Word Game" }
+                        p(classes = "card-text") { +"Write your own cards and shuffle them between players." }
+                        button(classes = "btn btn-primary") {
+                            +"Play"
+                            attrs.disabled = state.party!!.hostId != state.connection.userId
+                            attrs.onClickFunction = {
+                                state.ws!!.launch {
+                                    state.ws!!.send(PartyOptions.SetPartyModeRequest(PartyMode.WordGame))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        renderUsersList()
+    }
+
+    private fun RBuilder.renderWordGameSetup()
+    {
+        h1(classes = "mt-2") {
+            +"Word Game"
+            renderPartyCode()
+        }
+
+        renderUsersList()
+
+//        child(components.GameSettings::class) {
+//            attrs.editable = true
+//            attrs.settings = state.party!!.state.settings
+//            attrs.onSubmit = { newSettings ->
+//                state.ws!!.launch {
+//                    state.ws!!.send(WordGame.SetGameSettingsJson(newSettings))
+//                }
+//            }
+//        }
+    }
+
+    private fun RBuilder.renderPartyCode()
+    {
         styledSpan {
-            attrs.classes = setOf("badge bg-primary me-3 mb-3")
+            attrs.classes = setOf("badge bg-primary float-end")
             icon("vpn_key", classes = "align-top me-2", size = "24px")
             +state.party!!.code
             css {
@@ -256,8 +314,8 @@ class App : RComponent<RProps, AppState>()
             }
         }
 
-        button(classes = "btn btn-secondary btn-sm mx-auto") {
-            icon("logout"); +"Leave Party"
+        button(classes = "btn btn-secondary btn-sm float-end mx-2") {
+            icon("logout"); +"Leave"
             attrs.onClickFunction = {
                 println("LeaveParty")
                 state.ws!!.launch {
@@ -276,7 +334,10 @@ class App : RComponent<RProps, AppState>()
                 }
             }
         }
+    }
 
+    private fun RBuilder.renderUsersList()
+    {
         child(usersList)
         {
             attrs.thisUserId = state.connection.userId!!
@@ -298,16 +359,11 @@ class App : RComponent<RProps, AppState>()
                 }
             }
         }
+    }
 
-//        child(components.GameSettings::class) {
-//            attrs.editable = true
-//            attrs.settings = state.party!!.state.settings
-//            attrs.onSubmit = { newSettings ->
-//                state.ws!!.launch {
-//                    state.ws!!.send(WordGame.SetGameSettingsJson(newSettings))
-//                }
-//            }
-//        }
+    private fun RBuilder.renderWordGamePlaying()
+    {
+
     }
 
     private fun RBuilder.renderChat()

@@ -1,7 +1,7 @@
 package ch.rbarton.wordapp.web
 
 import ch.rbarton.wordapp.common.connection.responseHandlerQueue
-import ch.rbarton.wordapp.common.request.*
+import ch.rbarton.wordapp.common.request.BaseRequest
 import ch.rbarton.wordapp.web.receive.onBaseRequestReceived
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CancellationException
@@ -18,12 +18,21 @@ suspend fun App.receiveWebsocketFrames()
     {
         for (frame in state.ws!!.incoming)
         {
-            frame as? Frame.Text ?: continue
-            onFrameReceived(frame.readText())
+            when (frame)
+            {
+                is Frame.Text -> onFrameReceived(frame.readText())
+                is Frame.Close ->
+                {
+                    // TODO: set state
+                    println("Server Disconnected: ${frame.readReason()}")
+                    return
+                }
+            }
         }
     }
     catch (e: CancellationException)
     {
+        println("receiveWebsocketFrames cancelled")
     }
     catch (e: Exception)
     {

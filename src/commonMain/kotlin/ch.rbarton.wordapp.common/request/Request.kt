@@ -37,7 +37,8 @@ class Party
     data class JoinRequest(val partyCode: String) : BaseRequest()
 
     @Serializable
-    data class JoinResponse(val partyBase: PartyBase, val userToNames: Map<Int, UserInfo>) : BaseRequest()
+    data class JoinResponse(val partyBase: PartyBase, val userToNames: Map<Int, UserInfo>, val newColorId: Int?) :
+        BaseRequest()
 
     @Serializable
     data class JoinBroadcast(val userId: Int, val userInfo: UserInfo) : BaseRequest()
