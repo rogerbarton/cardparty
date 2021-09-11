@@ -135,7 +135,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     "name" ->
                     {
-                        send(UserInfo.SetNameRequest(userInfo.name)) { response ->
+                        send(UserInfo.SetNameRequest(value)) { response ->
                             if (response is StatusResponse && response.status == StatusCode.Success)
                             {
                                 userInfo.name = value
@@ -188,7 +188,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         """
                         Use: add [key] [value]
                           1. cat | category
-                          2. word [value] -- [category]
+                          2. card | word [value] -- [category]
                     """.trimMargin()
                     )
                     return
@@ -205,12 +205,12 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                 {
                     "cat", "category" ->
                     {
-                        send(WordGame.AddCategoryRequest(value, null))
+                        send(WordGame.AddCategoryRequest(value))
                     }
-                    "word" ->
+                    "card", "word" ->
                     {
                         val (word, cat) = splitFirst(value, "--")
-                        val categoryId = cat?.toInt()
+                        val categoryId = cat?.trim()?.toInt()
                         if (categoryId == null || party?.stateShared?.categories?.contains(categoryId) == false)
                             println("Invalid categoryId.")
                         else
