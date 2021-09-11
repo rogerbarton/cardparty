@@ -93,7 +93,7 @@ class WordGame
     data class SetGameStageRequest(val stage: GameStage) : BaseRequest()
 
     @Serializable
-    data class AddCategoryRequest(val text: String, val colorId: Int?) : BaseRequest()
+    data class AddCategoryRequest(val text: String, val colorId: Int? = null) : BaseRequest()
 
     @Serializable
     data class AddCategoryBroadcast(val category: CardCategory, val categoryId: Int) : BaseRequest()

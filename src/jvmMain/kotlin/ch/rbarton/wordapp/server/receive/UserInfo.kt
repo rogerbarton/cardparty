@@ -9,6 +9,12 @@ import ch.rbarton.wordapp.server.userInfos
 
 suspend fun Connection.onRequestReceived(request: UserInfo.SetNameRequest)
 {
+    if (request.name.isEmpty() || request.name.length > 20)
+    {
+        send(StatusCode.InvalidValue)
+        return
+    }
+
     userInfo.name = request.name
     party?.broadcast(this, UserInfo.SetNameBroadcast(userId, userInfo.name))
     send(StatusCode.Success)

@@ -4,11 +4,10 @@ import ch.rbarton.wordapp.common.data.colors
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.Connection
 import ch.rbarton.wordapp.server.data.Party
+import ch.rbarton.wordapp.server.getUnusedId
 import ch.rbarton.wordapp.server.parties
 import ch.rbarton.wordapp.server.send
 import kotlin.collections.*
-import kotlin.random.Random
-import kotlin.random.nextInt
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
 
 suspend fun Connection.createParty()
@@ -53,9 +52,7 @@ suspend fun Connection.onRequestReceived(request: PartyRequest.JoinRequest)
     if (party.connections.map { it.userInfo.colorId }.contains(userInfo.colorId))
     {
         // Assign unique color
-        val unusedColors = (0..colors.size).toMutableList()
-        unusedColors.removeAll(party.connections.map { it.userInfo.colorId })
-        userInfo.colorId = unusedColors.shuffled().getOrElse(0) { Random.nextInt(IntRange(0, colors.size - 1)) }
+        userInfo.colorId = getUnusedId(colors.indices.toMutableList(), party.connections.map { it.userInfo.colorId })
         colorChanged = true
     }
 

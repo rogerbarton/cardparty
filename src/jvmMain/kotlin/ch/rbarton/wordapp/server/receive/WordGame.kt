@@ -3,6 +3,7 @@ package ch.rbarton.wordapp.server.receive
 import ch.rbarton.wordapp.common.data.Card
 import ch.rbarton.wordapp.common.data.CardCategory
 import ch.rbarton.wordapp.common.data.GameStage
+import ch.rbarton.wordapp.common.data.colors
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.WordGame
 import ch.rbarton.wordapp.server.*
@@ -76,7 +77,8 @@ suspend fun Connection.onRequestReceived(request: WordGame.AddCategoryRequest)
         return
     }
 
-    val category = CardCategory(request.text, request.colorId ?: 0)
+    val colorId = request.colorId ?: getUnusedId(colors.indices.toMutableList(), categories.map { it.value.colorId })
+    val category = CardCategory(request.text, colorId)
     val categoryId = lastCategoryId.getAndIncrement()
     categories[categoryId] = category
 
