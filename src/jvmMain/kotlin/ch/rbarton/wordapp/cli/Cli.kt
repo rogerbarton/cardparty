@@ -37,7 +37,7 @@ fun main()
                     port = connection.serverPort,
                     path = "/"
                 ) {
-                    val messageOutputRoutine = launch { outputMessages() }
+                    val messageOutputRoutine = launch { receiveFrames() }
                     val userInputRoutine = launch { inputMessages(messageOutputRoutine) }
 
                     userInputRoutine.join() // wait for exit

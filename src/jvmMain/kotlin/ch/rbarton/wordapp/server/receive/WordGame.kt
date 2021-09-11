@@ -1,4 +1,4 @@
-package ch.rbarton.wordapp.server.request
+package ch.rbarton.wordapp.server.receive
 
 import ch.rbarton.wordapp.common.data.Card
 import ch.rbarton.wordapp.common.data.CardCategory

@@ -1,4 +1,4 @@
-package ch.rbarton.wordapp.server.request
+package ch.rbarton.wordapp.server.receive
 
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.Connection

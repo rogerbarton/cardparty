@@ -4,7 +4,7 @@ import ch.rbarton.wordapp.common.connection.send
 import ch.rbarton.wordapp.common.request.InitResponse
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.server.data.Party
-import ch.rbarton.wordapp.server.request.onJsonReceived
+import ch.rbarton.wordapp.server.receive.onBaseRequestReceived
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
@@ -87,7 +87,7 @@ private suspend fun onFrameReceived(rawText: String, thisConnection: Connection)
 
     try
     {
-        thisConnection.onJsonReceived(Json.decodeFromString(rawText))
+        thisConnection.onBaseRequestReceived(Json.decodeFromString(rawText))
     }
     catch (e: SerializationException)
     {

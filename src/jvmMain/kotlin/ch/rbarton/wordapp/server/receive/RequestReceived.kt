@@ -1,4 +1,4 @@
-package ch.rbarton.wordapp.server.request
+package ch.rbarton.wordapp.server.receive
 
 import ch.rbarton.wordapp.common.request.*
 import ch.rbarton.wordapp.server.Connection
@@ -8,7 +8,7 @@ import ch.rbarton.wordapp.server.send
  * Handles the received request and sends a response
  * Multiplexer of different json types
  */
-suspend fun Connection.onJsonReceived(request: BaseRequest)
+suspend fun Connection.onBaseRequestReceived(request: BaseRequest)
 {
     currentRequestId = request.requestId
     when (request)
@@ -20,6 +20,7 @@ suspend fun Connection.onJsonReceived(request: BaseRequest)
         }
         is UserInfo.SetNameRequest -> onRequestReceived(request)
         is UserInfo.SetColorRequest -> onRequestReceived(request)
+
         is Party.JoinRequest -> onRequestReceived(request)
         is PartyOptions.SetPartyModeRequest -> onRequestReceived(request)
         is Chat.MessageRequest -> onRequestReceived(request)
