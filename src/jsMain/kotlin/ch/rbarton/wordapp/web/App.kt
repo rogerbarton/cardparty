@@ -9,6 +9,7 @@ import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
 import ch.rbarton.wordapp.web.components.*
 import ch.rbarton.wordapp.web.components.external.icon
+import ch.rbarton.wordapp.web.receive.onBaseRequestReceived
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
@@ -204,7 +205,7 @@ class App : RComponent<RProps, AppState>()
                                     lastPartyStatus = response
                                 }
                             }
-                            else -> handleUnidentifiedResponse(response)
+                            else -> onBaseRequestReceived(response)
                         }
                     }
                 }
@@ -232,7 +233,7 @@ class App : RComponent<RProps, AppState>()
                                     lastPartyStatus = response
                                 }
                             }
-                            else -> handleUnidentifiedResponse(response)
+                            else -> onBaseRequestReceived(response)
                         }
                     }
                 }
@@ -270,7 +271,7 @@ class App : RComponent<RProps, AppState>()
                             }
                         }
                         else
-                            handleUnidentifiedResponse(response)
+                            onBaseRequestReceived(response)
                     }
                 }
             }
@@ -292,7 +293,7 @@ class App : RComponent<RProps, AppState>()
                             }
                         }
                         else
-                            handleUnidentifiedResponse(response)
+                            onBaseRequestReceived(response)
                     }
                 }
             }

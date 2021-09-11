@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.web
 
 import ch.rbarton.wordapp.common.connection.responseHandlerQueue
 import ch.rbarton.wordapp.common.request.*
+import ch.rbarton.wordapp.web.receive.onBaseRequestReceived
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
@@ -43,7 +44,7 @@ private fun App.onFrameReceived(rawText: String)
         val request = Json.decodeFromString<BaseRequest>(rawText)
         if (request.requestId == null)
         {
-            handleUnidentifiedResponse(request)
+            onBaseRequestReceived(request)
         }
         else
         {
@@ -55,7 +56,7 @@ private fun App.onFrameReceived(rawText: String)
                     "<~[server] InvalidRequestId: BaseRequest.requestId = ${request.requestId} " +
                             "has no corresponding responseHandler in responseHandlerQueue.\n"
                 )
-                handleUnidentifiedResponse(request)
+                onBaseRequestReceived(request)
             }
         }
     }
