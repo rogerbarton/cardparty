@@ -46,6 +46,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                                        
                     When in a game:
                       add [key] [value]
+                      remove [key] [id]
                 """.trimIndent()
                 )
             }
@@ -184,7 +185,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                     println(
                         """
                         Use: add [key] [value]
-                          1. cat    (category)
+                          1. cat | category
                           2. word [value] -- [category]
                     """.trimMargin()
                     )
@@ -200,7 +201,7 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
 
                 when (key)
                 {
-                    "cat" ->
+                    "cat", "category" ->
                     {
                         send(WordGame.AddCategoryRequest(value, null))
                     }
@@ -213,6 +214,35 @@ suspend fun DefaultClientWebSocketSession.parseCliCommand(input: String)
                         else
                             send(WordGame.AddCardRequest(word.trim(), categoryId))
                     }
+                    else -> println("Unknown key: $key")
+                }
+            }
+            "remove" ->
+            {
+                if (args == null)
+                {
+                    println(
+                        """
+                        Use: remove [key] [id]
+                          1. cat | category
+                          2. word
+                    """.trimMargin()
+                    )
+                    return
+                }
+
+                val (key, idStr) = splitFirst(args)
+                val id = idStr?.toIntOrNull()
+                if (id == null)
+                {
+                    println("Must give an id.")
+                    return
+                }
+
+                when (key)
+                {
+                    "cat", "category" -> send(WordGame.RemoveCategoryRequest(id))
+                    "word" -> send(WordGame.RemoveCardRequest(id))
                     else -> println("Unknown key: $key")
                 }
             }

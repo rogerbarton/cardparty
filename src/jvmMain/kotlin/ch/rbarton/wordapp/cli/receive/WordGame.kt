@@ -11,20 +11,28 @@ fun onRequestReceived(response: WordGame.SetGameStageRequest)
     println("Game stage: ${party!!.stateShared!!.stage}")
 }
 
+fun onRequestReceived(response: WordGame.SetGameSettingsRequest)
+{
+    if (party == null || party!!.stateShared == null) return
+
+    party!!.stateShared!!.settings = response.settings
+    println("Game settings: ${party!!.stateShared!!.settings}")
+}
+
 fun onRequestReceived(response: WordGame.AddCategoryBroadcast)
 {
     if (party == null || party!!.stateShared == null) return
 
     party!!.stateShared!!.categories[response.categoryId] = response.category
 
-    println("Category ${response.category} added")
+    println("Added category: ${response.category.text}")
 }
 
 fun onRequestReceived(response: WordGame.RemoveCategoryRequest)
 {
     if (party == null || party!!.stateShared == null || !party!!.stateShared!!.categories.contains(response.categoryId)) return
 
-    println("Removing category: ${party!!.stateShared!!.categories[response.categoryId]!!.text}")
+    println("Removed category: ${party!!.stateShared!!.categories[response.categoryId]!!.text}")
 
     party!!.stateShared!!.categories.remove(response.categoryId)
     party!!.stateShared!!.cards =
@@ -44,7 +52,7 @@ fun onRequestReceived(response: WordGame.RemoveCardRequest)
 {
     if (party == null || party!!.stateShared == null || !party!!.stateShared!!.cards.contains(response.cardId)) return
 
-    println("Removing card: ${party!!.stateShared!!.cards[response.cardId]!!.text}")
+    println("Removed card: ${party!!.stateShared!!.cards[response.cardId]!!.text}")
     party!!.stateShared!!.cards.remove(response.cardId)
 }
 
@@ -54,6 +62,6 @@ fun onRequestReceived(response: WordGame.AssignWordsScatter)
 
     party!!.stateClient!!.myCards = response.cards
 
-    println("Assigned words:\n${party!!.stateClient!!.myCards!!.joinToString { " - $it\n" }}")
+    println("Assigned words:\n${party!!.stateClient!!.myCards!!.joinToString(separator = "\n") { " - $it" }}")
 }
 

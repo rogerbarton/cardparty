@@ -34,6 +34,12 @@ fun App.onBaseRequestReceived(response: BaseRequest)
         is Chat.MessageBroadcast -> onRequestReceived(response)
 
         is WordGame.SetGameSettingsRequest -> onRequestReceived(response)
+        is WordGame.SetGameStageRequest -> onRequestReceived(response)
+        is WordGame.AddCardBroadcast -> onRequestReceived(response)
+        is WordGame.RemoveCardRequest -> onRequestReceived(response)
+        is WordGame.AddCategoryBroadcast -> onRequestReceived(response)
+        is WordGame.RemoveCategoryRequest -> onRequestReceived(response)
+        is WordGame.AssignWordsScatter -> onRequestReceived(response)
         else -> println("-> $response")
     }
 }

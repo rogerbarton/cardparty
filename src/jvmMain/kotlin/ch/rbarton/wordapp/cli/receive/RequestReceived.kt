@@ -37,6 +37,7 @@ fun onBaseRequestReceived(response: BaseRequest, rawText: String)
         is PartyOptions.SetPartyModeBroadcast -> onRequestReceived(response)
 
         is WordGame.SetGameStageRequest -> onRequestReceived(response)
+        is WordGame.SetGameSettingsRequest -> onRequestReceived(response)
         is WordGame.AddCardBroadcast -> onRequestReceived(response)
         is WordGame.RemoveCardRequest -> onRequestReceived(response)
         is WordGame.AddCategoryBroadcast -> onRequestReceived(response)
