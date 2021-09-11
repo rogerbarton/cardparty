@@ -15,7 +15,7 @@ suspend fun App.receiveWebsocketFrames()
 {
     try
     {
-        for (frame in state.ws.incoming)
+        for (frame in state.ws!!.incoming)
         {
             frame as? Frame.Text ?: continue
             onFrameReceived(frame.readText())
@@ -26,7 +26,7 @@ suspend fun App.receiveWebsocketFrames()
     }
     catch (e: Exception)
     {
-        println("Fatal Websocket Error: ${e.message}")
+        println("Fatal Websocket Error: [${e::class.simpleName}] ${e.message}")
     }
 }
 

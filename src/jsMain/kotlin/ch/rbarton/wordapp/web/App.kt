@@ -7,23 +7,23 @@ import ch.rbarton.wordapp.common.data.UserInfo
 import ch.rbarton.wordapp.common.request.ActionType
 import ch.rbarton.wordapp.common.request.StatusCode
 import ch.rbarton.wordapp.common.request.StatusResponse
-import ch.rbarton.wordapp.web.components.Chat
-import ch.rbarton.wordapp.web.components.NameField
-import ch.rbarton.wordapp.web.components.SetParty
-import ch.rbarton.wordapp.web.components.usersList
+import ch.rbarton.wordapp.web.components.*
+import ch.rbarton.wordapp.web.components.external.icon
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.css.LinearDimension
+import kotlinx.css.fontFamily
+import kotlinx.css.fontSize
+import kotlinx.html.classes
 import kotlinx.html.js.onClickFunction
 import react.*
-import react.dom.button
-import react.dom.h1
-import react.dom.h2
-import react.dom.span
+import react.dom.*
+import styled.css
+import styled.styledSpan
 import ch.rbarton.wordapp.common.request.Chat as ChatRequest
 import ch.rbarton.wordapp.common.request.Party as PartyRequest
 import ch.rbarton.wordapp.common.request.UserInfo as UserInfoRequest
@@ -41,12 +41,12 @@ external interface AppState : State
     var lastPartyStatus: StatusResponse?
 
     var httpClient: HttpClient
-    var ws: WebSocketSession
+    var isAttemptingConnection: Boolean
+    var ws: WebSocketSession?
 }
 
 class App : RComponent<RProps, AppState>()
 {
-    @DelicateCoroutinesApi
     override fun AppState.init()
     {
         connection = ConnectionData()
@@ -58,42 +58,91 @@ class App : RComponent<RProps, AppState>()
             install(WebSockets)
         }
 
-        GlobalScope.launch {
-            ws = httpClient.webSocketSession(
+        launchWebsocket()
+    }
+
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    private fun launchWebsocket() = GlobalScope.launch {
+        setState { isAttemptingConnection = true }
+        try
+        {
+            val newWs = state.httpClient.webSocketSession(
                 method = HttpMethod.Get,
-                host = connection.serverAddress,
-                port = connection.serverPort,
+                host = state.connection.serverAddress,
+                port = state.connection.serverPort,
                 path = "/"
             ) {
-                println("WebSocket running...")
+                println("WebSocket started")
+            }
+            setState {
+                ws = newWs
             }
             receiveWebsocketFrames()
         }
+        catch (e: WebSocketException)
+        {
+            println("Failed to connect websocket: ${e.message}")
+        }
+        setState { isAttemptingConnection = false }
     }
 
     override fun RBuilder.render()
     {
+        if (state.ws == null)
+        {
+            renderConnecting()
+            return
+        }
+
         if (state.userInfo.name.isEmpty())
         {
-            welcome()
-            setName()
+            renderWelcome()
+            renderSetName()
             return
         }
 
         if (state.party == null)
         {
-            welcome()
-            setParty()
+            renderWelcome()
+            renderSetParty()
         }
         else
         {
-            inParty()
-            chat()
+            renderInParty()
+            renderChat()
         }
 
     }
 
-    private fun RBuilder.welcome()
+    private fun RBuilder.renderConnecting()
+    {
+        if (state.isAttemptingConnection)
+        {
+            div(classes = "d-flex align-items-center justify-content-center m-3") {
+                div(classes = "spinner-border text-primary mx-3") { }
+                b(classes = "fs-3") { +"Connecting..." }
+            }
+        }
+        else
+        {
+            child(RetryServer) {
+                attrs.address = state.connection.serverAddress
+                attrs.port = state.connection.serverPort.toString()
+                attrs.onRetry = {
+                    launchWebsocket()
+                }
+                attrs.onNewAddress = { address, port ->
+                    setState {
+                        connection.serverAddress = address
+                        connection.serverPort = port
+                    }
+                    launchWebsocket()
+                }
+            }
+        }
+    }
+
+    private fun RBuilder.renderWelcome()
     {
         h1 {
             +"Welcome to the word game!"
@@ -107,7 +156,7 @@ class App : RComponent<RProps, AppState>()
 //        }
     }
 
-    private fun RBuilder.setName()
+    private fun RBuilder.renderSetName()
     {
         h2 {
             +"Choose a Name"
@@ -117,15 +166,15 @@ class App : RComponent<RProps, AppState>()
                 setState {
                     userInfo.name = value
                 }
-                state.ws.launch {
+                state.ws!!.launch {
                     println("setname: ${state.userInfo.name}")
-                    state.ws.send(UserInfoRequest.SetNameRequest(state.userInfo.name))
+                    state.ws!!.send(UserInfoRequest.SetNameRequest(state.userInfo.name))
                 }
             }
         }
     }
 
-    private fun RBuilder.setParty()
+    private fun RBuilder.renderSetParty()
     {
         child(SetParty) {
             attrs.partyCode = state.party?.code
@@ -134,8 +183,8 @@ class App : RComponent<RProps, AppState>()
             attrs.onCreateParty = {
                 println("CreateParty")
                 setState { lastPartyStatus = null }
-                state.ws.launch {
-                    state.ws.send(ActionType.PartyCreate) { response ->
+                state.ws!!.launch {
+                    state.ws!!.send(ActionType.PartyCreate) { response ->
                         when (response)
                         {
                             is PartyRequest.CreateResponse ->
@@ -163,8 +212,8 @@ class App : RComponent<RProps, AppState>()
             attrs.onJoinParty = { value ->
                 println("JoinParty $value")
                 setState { lastPartyStatus = null }
-                state.ws.launch {
-                    state.ws.send(PartyRequest.JoinRequest(value)) { response ->
+                state.ws!!.launch {
+                    state.ws!!.send(PartyRequest.JoinRequest(value)) { response ->
                         when (response)
                         {
                             is PartyRequest.JoinResponse ->
@@ -191,23 +240,50 @@ class App : RComponent<RProps, AppState>()
         }
     }
 
-    private fun RBuilder.inParty()
+    private fun RBuilder.renderInParty()
     {
         h1 {
             +"Word Game Lobby"
         }
-        h2 {
-            +"Join with code: "
-            span(classes = "badge bg-primary") { +state.party!!.code }
+        styledSpan {
+            attrs.classes = setOf("badge bg-primary me-3 mb-3")
+            icon("vpn_key", classes = "align-top me-2", size = "24px")
+            +state.party!!.code
+            css {
+                fontFamily = "'Roboto Mono', monospace"
+                fontSize = LinearDimension("24px")
+            }
         }
 
-        child(usersList) {
+        button(classes = "btn btn-secondary btn-sm mx-auto") {
+            icon("logout"); +"Leave Party"
+            attrs.onClickFunction = {
+                println("LeaveParty")
+                state.ws!!.launch {
+                    state.ws!!.send(ActionType.PartyLeave) { response ->
+                        if (response is StatusResponse && response.status == StatusCode.Success)
+                        {
+                            setState {
+                                party = null
+                                lastPartyStatus = null
+                                chatHistory.clear()
+                            }
+                        }
+                        else
+                            handleUnidentifiedResponse(response)
+                    }
+                }
+            }
+        }
+
+        child(usersList)
+        {
             attrs.thisUserId = state.connection.userId!!
             attrs.users = state.party!!.users
             attrs.host = state.party!!.hostId
             attrs.onSetName = { newName ->
-                state.ws.launch {
-                    state.ws.send(UserInfoRequest.SetNameRequest(newName)) { response ->
+                state.ws!!.launch {
+                    state.ws!!.send(UserInfoRequest.SetNameRequest(newName)) { response ->
                         if (response is StatusResponse && response.status == StatusCode.Success)
                         {
                             setState {
@@ -226,35 +302,14 @@ class App : RComponent<RProps, AppState>()
 //            attrs.editable = true
 //            attrs.settings = state.party!!.state.settings
 //            attrs.onSubmit = { newSettings ->
-//                state.ws.launch {
-//                    state.ws.send(WordGame.SetGameSettingsJson(newSettings))
+//                state.ws!!.launch {
+//                    state.ws!!.send(WordGame.SetGameSettingsJson(newSettings))
 //                }
 //            }
 //        }
-
-        button(classes = "btn btn-secondary mb-2") {
-            +"Leave Party"
-            attrs.onClickFunction = {
-                println("LeaveParty")
-                state.ws.launch {
-                    state.ws.send(ActionType.PartyLeave) { response ->
-                        if (response is StatusResponse && response.status == StatusCode.Success)
-                        {
-                            setState {
-                                party = null
-                                lastPartyStatus = null
-                                chatHistory.clear()
-                            }
-                        }
-                        else
-                            handleUnidentifiedResponse(response)
-                    }
-                }
-            }
-        }
     }
 
-    private fun RBuilder.chat()
+    private fun RBuilder.renderChat()
     {
         child(Chat) {
             attrs.chatHistory = state.chatHistory
@@ -264,8 +319,8 @@ class App : RComponent<RProps, AppState>()
                 setState {
                     chatHistory.add(log)
                 }
-                state.ws.launch {
-                    state.ws.send(ChatRequest.MessageRequest(message))
+                state.ws!!.launch {
+                    state.ws!!.send(ChatRequest.MessageRequest(message))
                 }
             }
         }
