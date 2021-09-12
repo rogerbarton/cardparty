@@ -60,8 +60,13 @@ fun onRequestReceived(response: WordGame.AssignWordsScatter)
 {
     if (party == null || party!!.stateShared == null) return
 
-    party!!.stateClient!!.myCards = response.cards
+    party!!.stateClient!!.myCardIds = response.cards
 
-    println("Assigned words:\n${party!!.stateClient!!.myCards!!.joinToString(separator = "\n") { " - $it" }}")
+    println(
+        "Assigned words:\n${
+            party!!.stateClient!!.myCardIds!!.map { party!!.stateShared!!.cards[it] }
+                .joinToString(separator = "\n") { " - ${it?.text}" }
+        }"
+    )
 }
 

@@ -6,13 +6,13 @@ import kotlinx.serialization.Serializable
 data class Card(val text: String, val categoryId: Int, val userId: Int)
 
 @Serializable
-data class CardCategory(val text: String, val colorId: Int)
+data class Category(val text: String, val colorId: Int)
 
 @Serializable
 class GameStateShared(
     var stage: GameStage = GameStage.Setup,
     var settings: GameSettings = GameSettings(),
-    val categories: MutableMap<Int, CardCategory> = mutableMapOf(),
+    val categories: MutableMap<Int, Category> = mutableMapOf(),
     var cards: MutableMap<Int, Card> = mutableMapOf()
 )
 

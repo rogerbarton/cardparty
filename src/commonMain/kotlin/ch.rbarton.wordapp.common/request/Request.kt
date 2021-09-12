@@ -96,7 +96,7 @@ class WordGame
     data class AddCategoryRequest(val text: String, val colorId: Int? = null) : BaseRequest()
 
     @Serializable
-    data class AddCategoryBroadcast(val category: CardCategory, val categoryId: Int) : BaseRequest()
+    data class AddCategoryBroadcast(val category: Category, val categoryId: Int) : BaseRequest()
 
     @Serializable
     data class RemoveCategoryRequest(val categoryId: Int) : BaseRequest()
@@ -111,7 +111,7 @@ class WordGame
     data class RemoveCardRequest(val cardId: Int) : BaseRequest()
 
     @Serializable
-    data class AssignWordsScatter(val cards: List<Card>) : BaseRequest()
+    data class AssignWordsScatter(val cards: Set<Int>) : BaseRequest()
 
     class Playing
     {

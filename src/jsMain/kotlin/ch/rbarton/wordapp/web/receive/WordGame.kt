@@ -2,6 +2,7 @@ package ch.rbarton.wordapp.web.receive
 
 import ch.rbarton.wordapp.common.request.WordGame
 import ch.rbarton.wordapp.web.App
+import ch.rbarton.wordapp.web.components.MessageType
 import ch.rbarton.wordapp.web.components.add
 import react.setState
 
@@ -47,7 +48,7 @@ fun App.onRequestReceived(response: WordGame.RemoveCategoryRequest)
         !state.party!!.stateShared!!.categories.contains(response.categoryId)
     ) return
 
-    val log = "Removing category: ${state.party!!.stateShared!!.categories[response.categoryId]!!.text}"
+    val log = "Removed category: ${state.party!!.stateShared!!.categories[response.categoryId]!!.text}"
     println(log)
 
     setState {
@@ -75,7 +76,7 @@ fun App.onRequestReceived(response: WordGame.RemoveCardRequest)
 {
     if (state.party == null || state.party!!.stateShared == null || !state.party!!.stateShared!!.cards.contains(response.cardId)) return
 
-    val log = "Removing card: ${state.party!!.stateShared!!.cards[response.cardId]!!.text}"
+    val log = "Removed card: ${state.party!!.stateShared!!.cards[response.cardId]!!.text}"
     println(log)
 
     setState {
@@ -88,11 +89,13 @@ fun App.onRequestReceived(response: WordGame.AssignWordsScatter)
 {
     if (state.party == null || state.party!!.stateShared == null) return
 
-    val log = "Assigned words:\n${response.cards.joinToString { " - $it\n" }}"
+    val log = "Assigned words:\n${
+        response.cards.map { state.party!!.stateShared!!.cards[it] }.joinToString(separator = "\n") { " - ${it?.text}" }
+    }"
     println(log)
 
     setState {
-        party!!.stateClient!!.myCards = response.cards
-        chatHistory.add(log)
+        party!!.stateClient!!.myCardIds = response.cards
+        chatHistory.add(log, MessageType.Debug)
     }
 }
