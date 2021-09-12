@@ -15,19 +15,20 @@ import react.dom.input
 import react.fc
 import react.useState
 
-external interface AddCategoryProps : RProps
+external interface AddItemProps : RProps
 {
-    var onAddCategory: (String) -> Unit
+    var typeName: String
+    var onSubmit: (String) -> Unit
 }
 
-val AddCategory = fc<AddCategoryProps> { props ->
+val AddItem = fc<AddItemProps> { props ->
     val (showInput, setShowInput) = useState(false)
-    val (categoryInput, setCategoryInput) = useState("")
+    val (text, setText) = useState("")
 
     if (!showInput)
     {
-        button(classes = "btn btn-outline-secondary ms-2") {
-            icon("add"); +"Add Category"
+        button(classes = "btn btn-outline-secondary me-2 mb-2") {
+            icon("add"); +"Add ${props.typeName}"
             attrs.onClickFunction = {
                 setShowInput(true)
             }
@@ -38,22 +39,22 @@ val AddCategory = fc<AddCategoryProps> { props ->
         form(classes = "input-group") {
             attrs.onSubmitFunction = {
                 it.preventDefault()
-                if (categoryInput.isNotBlank())
-                    props.onAddCategory(categoryInput.trim())
-                setCategoryInput("")
+                if (text.isNotBlank())
+                    props.onSubmit(text.trim())
+                setText("")
                 setShowInput(false)
             }
             input(type = InputType.text, classes = "form-control") {
                 attrs.onChangeFunction = {
-                    setCategoryInput((it.target as HTMLInputElement).value)
+                    setText((it.target as HTMLInputElement).value)
                 }
                 attrs.autoFocus = true
             }
             button(type = ButtonType.submit, classes = "btn btn-sm") {
-                if (categoryInput.isNotBlank())
+                if (text.isNotBlank())
                 {
                     attrs.classes += "btn-primary"
-                    icon("check", size = "18px"); +"Add Category"
+                    icon("check", size = "18px"); +"Add ${props.typeName}"
                 }
                 else
                 {

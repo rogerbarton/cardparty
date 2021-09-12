@@ -9,7 +9,7 @@ import ch.rbarton.wordapp.common.data.UserInfo
 import ch.rbarton.wordapp.common.request.*
 import ch.rbarton.wordapp.web.components.*
 import ch.rbarton.wordapp.web.components.external.icon
-import ch.rbarton.wordapp.web.components.wordgame.AddCategory
+import ch.rbarton.wordapp.web.components.wordgame.AddItem
 import ch.rbarton.wordapp.web.components.wordgame.CardList
 import ch.rbarton.wordapp.web.receive.onBaseRequestReceived
 import io.ktor.client.*
@@ -181,11 +181,8 @@ class App : RComponent<RProps, AppState>()
         child(NameField) {
             attrs.onSubmit = { newName ->
                 println("setname: $newName")
-                state.ws!!.launchSend(UserInfoRequest.SetNameRequest(newName)) { response ->
-                    if (response is StatusResponse && response.status == StatusCode.Success)
-                        setState { userInfo.name = newName }
-                    else
-                        onBaseRequestReceived(response)
+                state.ws!!.launchSend(UserInfoRequest.SetNameRequest(newName)) {
+                    onSuccess(it) { setState { userInfo.name = newName } }
                 }
             }
         }
@@ -212,7 +209,6 @@ class App : RComponent<RProps, AppState>()
                                     state.connection.userId!!
                                 )
                             }
-                            println("Created party with code: ${response.partyCode}")
                         }
                         is StatusResponse ->
                         {
@@ -266,6 +262,14 @@ class App : RComponent<RProps, AppState>()
                     div(classes = "card-body") {
                         h5(classes = "card-title") { +"Word Game" }
                         p(classes = "card-text") { +"Write your own cards and shuffle them between players." }
+
+                        // TODO: move game settings to game select card, in PartyIdle
+//                        child(components.GameSettings::class) {
+//                            attrs.settings = state.party!!.state.settings
+//                            attrs.onSubmit = { newSettings ->
+//                                state.ws!!.launchSend(WordGame.SetGameSettingsJson(newSettings))
+//                            }
+//                        }
                         button(classes = "btn btn-primary") {
                             +"Play"
                             attrs.disabled = state.party!!.hostId != state.connection.userId
@@ -285,37 +289,62 @@ class App : RComponent<RProps, AppState>()
     {
         renderUsersList()
 
-//        child(components.GameSettings::class) {
-//            attrs.editable = true
-//            attrs.settings = state.party!!.state.settings
-//            attrs.onSubmit = { newSettings ->
-//                state.ws!!.launch {
-//                    state.ws!!.send(WordGame.SetGameSettingsJson(newSettings))
-//                }
-//            }
-//        }
-
         for ((categoryId, category) in state.party!!.stateShared!!.categories)
         {
             child(CardList) {
-                attrs.category = category
+                attrs.title = category.text
+                attrs.colorId = category.colorId
                 attrs.cards = state.party!!.stateShared!!.cards.filter { it.value.categoryId == categoryId }
+                attrs.onAddCard = { text ->
+                    state.ws!!.launchSend(WordGame.AddCardRequest(text, categoryId))
+                }
                 attrs.onRemoveCard = { cardId ->
                     state.ws!!.launchSend(WordGame.RemoveCardRequest(cardId))
+                }
+                attrs.onRemoveCategory = {
+                    state.ws!!.launchSend(WordGame.RemoveCategoryRequest(categoryId))
                 }
             }
         }
 
-        child(AddCategory) {
-            attrs.onAddCategory = { category ->
+        child(AddItem) {
+            attrs.typeName = "Category"
+            attrs.onSubmit = { category ->
                 state.ws!!.launchSend(WordGame.AddCategoryRequest(category))
+            }
+        }
+        br {}
+
+        if (state.connection.userId == state.party!!.hostId)
+        {
+            button(classes = "btn btn-primary") {
+                icon("play_arrow"); +"Start"
+                val groupedCards = state.party!!.stateShared!!.cards.values.groupBy { it.categoryId }
+                attrs.disabled = state.party!!.stateShared!!.categories.isEmpty() ||
+                        state.party!!.stateShared!!.categories.any {
+                            (groupedCards[it.key]?.count() ?: 0) < state.party!!.users.count()
+                        }
+                attrs.onClickFunction = {
+                    state.ws!!.launchSend(WordGame.SetGameStageRequest(GameStage.Playing)) {
+                        onSuccess(it) { setState { party!!.stateShared!!.stage = GameStage.Playing } }
+                    }
+                }
             }
         }
     }
 
     private fun RBuilder.renderWordGamePlaying()
     {
-
+        if (state.party!!.stateClient!!.myCardIds != null)
+            child(CardList) {
+                attrs.title = "My Cards"
+                attrs.colorId = state.userInfo.colorId
+                attrs.cards = state.party!!.stateClient!!.myCardIds!!.associateBy({ it },
+                    { state.party!!.stateShared!!.cards[it]!! })
+                attrs.onAddCard = null
+                attrs.onRemoveCard = null
+                attrs.onRemoveCategory = null
+            }
     }
 
     private fun RBuilder.renderPartyCode()
@@ -334,17 +363,14 @@ class App : RComponent<RProps, AppState>()
             icon("logout"); +"Leave"
             attrs.onClickFunction = {
                 println("LeaveParty")
-                state.ws!!.launchSend(ActionType.PartyLeave) { response ->
-                    if (response is StatusResponse && response.status == StatusCode.Success)
-                    {
+                state.ws!!.launchSend(ActionType.PartyLeave) {
+                    onSuccess(it) {
                         setState {
                             party = null
                             lastPartyStatus = null
                             chatHistory.clear()
                         }
                     }
-                    else
-                        onBaseRequestReceived(response)
                 }
             }
         }
@@ -358,16 +384,13 @@ class App : RComponent<RProps, AppState>()
             attrs.users = state.party!!.users
             attrs.host = state.party!!.hostId
             attrs.onSetName = { newName ->
-                state.ws!!.launchSend(UserInfoRequest.SetNameRequest(newName)) { response ->
-                    if (response is StatusResponse && response.status == StatusCode.Success)
-                    {
+                state.ws!!.launchSend(UserInfoRequest.SetNameRequest(newName)) {
+                    onSuccess(it) {
                         setState {
                             userInfo.name = newName
                             party!!.users[connection.userId!!]!!.name = newName
                         }
                     }
-                    else
-                        onBaseRequestReceived(response)
                 }
             }
         }
@@ -386,6 +409,17 @@ class App : RComponent<RProps, AppState>()
                 state.ws!!.launchSend(ChatRequest.MessageRequest(message))
             }
         }
+    }
+
+    /**
+     * Temporary helper for handling other responses
+     */
+    private fun onSuccess(response: BaseRequest, execute: () -> Unit)
+    {
+        if (response is StatusResponse && response.status == StatusCode.Success)
+            execute()
+        else
+            onBaseRequestReceived(response)
     }
 }
 

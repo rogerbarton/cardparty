@@ -29,6 +29,7 @@ val NameField = fc<SetNameProps> { props ->
             it.preventDefault()
             if (value.isNotBlank())
                 props.onSubmit(value)
+            setValue("")
         }
         input(InputType.text, classes = "form-control") {
             attrs.onChangeFunction = {

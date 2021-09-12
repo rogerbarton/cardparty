@@ -12,7 +12,7 @@ val colors = listOf(
     "#D9C750",
     "#FCCF62",
     "#7F60F7",
-    "#5573D9",
+    "#7B96ED",
     "#69C1F0",
     "#50D9CE",
     "#62FCAB",

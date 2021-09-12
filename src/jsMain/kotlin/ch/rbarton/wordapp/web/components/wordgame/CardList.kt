@@ -1,7 +1,6 @@
 package ch.rbarton.wordapp.web.components.wordgame
 
 import ch.rbarton.wordapp.common.data.Card
-import ch.rbarton.wordapp.common.data.CardCategory
 import ch.rbarton.wordapp.common.data.colors
 import ch.rbarton.wordapp.web.components.external.icon
 import kotlinx.css.Color
@@ -19,13 +18,32 @@ import styled.styledDiv
 
 external interface CardListProps : RProps
 {
-    var category: CardCategory
+    var title: String
+    var colorId: Int
     var cards: Map<Int, Card>
-    var onRemoveCard: (Int) -> Unit
+    var onAddCard: ((String) -> Unit)?
+    var onRemoveCard: ((Int) -> Unit)?
+    var onRemoveCategory: (() -> Unit)?
 }
 
 val CardList = fc<CardListProps> { props ->
-    h3 { +props.category.text }
+    h3 {
+        +props.title
+        if (props.onRemoveCategory != null)
+            button(classes = "btn btn-outline-secondary btn-sm mx-2") {
+                icon("delete")
+                attrs.onClickFunction = { props.onRemoveCategory!!() }
+            }
+    }
+
+    if (props.onAddCard != null)
+    {
+        child(AddItem) {
+            attrs.typeName = "Card"
+            attrs.onSubmit = props.onAddCard!!
+        }
+        br {}
+    }
 
     styledDiv {
         attrs.classes = setOf("row flex-row flex-nowrap mb-2")
@@ -35,20 +53,22 @@ val CardList = fc<CardListProps> { props ->
             div(classes = "col-sm-4") {
                 styledDiv {
                     attrs.classes = setOf("card")
-                    css { backgroundColor = Color(colors[props.category.colorId]) }
+                    css { backgroundColor = Color(colors[props.colorId]) }
 
                     div(classes = "card-body") {
                         h5(classes = "card-title") { +card.text }
                         p(classes = "card-text") {
                             +card.userId.toString()
-                            button(classes = "btn btn-outline-secondary btn-sm float-end") {
-                                icon("delete")
-                                attrs.onClickFunction = { props.onRemoveCard(cardId) }
-                            }
+                            if (props.onRemoveCard != null)
+                                button(classes = "btn btn-outline-secondary btn-sm float-end") {
+                                    icon("delete")
+                                    attrs.onClickFunction = { props.onRemoveCard!!(cardId) }
+                                }
                         }
                     }
                 }
             }
         }
     }
+    hr {}
 }
