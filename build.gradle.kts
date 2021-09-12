@@ -107,3 +107,7 @@ tasks.getByName<JavaExec>("run") {
     dependsOn(tasks.getByName<Jar>("jvmJar"))
     classpath(tasks.getByName<Jar>("jvmJar"))
 }
+
+tasks.create("stage") {
+    dependsOn("installDist")
+}

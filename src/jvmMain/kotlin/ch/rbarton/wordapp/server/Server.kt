@@ -30,7 +30,7 @@ fun main(args: Array<String>) = EngineMain.main(args)
 @Suppress("unused")
 fun Application.module()
 {
-    embeddedServer(Netty, host = "127.0.0.1", port = 8080) {
+    embeddedServer(Netty,/* host = "127.0.0.1", port = 8080 ,*/ port = System.getenv("PORT").toInt()) {
         install(WebSockets)
         install(Compression) {
             gzip()
