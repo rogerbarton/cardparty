@@ -207,7 +207,7 @@ class App : RComponent<RProps, AppState>()
                         {
                             setState {
                                 party = Party(
-                                    mutableMapOf(0 to state.userInfo),
+                                    mutableMapOf(state.connection.userId!! to state.userInfo),
                                     response.partyCode,
                                     state.connection.userId!!
                                 )
