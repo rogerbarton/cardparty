@@ -13,6 +13,10 @@ import kotlinx.serialization.Serializable
 
 const val ApiVersion = 1
 
+/**
+ * The base serialized request which all requests derive from to allow for easy deserialization/parsing
+ * @param requestId enables matching several requests and responses together
+ */
 @Serializable
 sealed class BaseRequest(var requestId: Int? = null, @Required val version: Int? = ApiVersion)
 

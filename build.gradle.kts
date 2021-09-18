@@ -85,6 +85,7 @@ application {
     mainClassName = "ch.rbarton.wordapp.server.ServerKt"
 }
 
+// Not sure if this works
 val cliTask = tasks.register("cli", CreateStartScripts::class){
     applicationName = "cli"
     mainClassName = "cli.CliKt"
@@ -108,10 +109,12 @@ tasks.getByName<JavaExec>("run") {
     classpath(tasks.getByName<Jar>("jvmJar"))
 }
 
+// Task for building with heroku
 tasks.create("stage") {
     dependsOn("installDist")
 }
 
+// Adapt installDist so heroku build works
 // only necessary until https://youtrack.jetbrains.com/issue/KT-37964 is resolved
 distributions {
     main {
